@@ -3,10 +3,11 @@
 Cliente Android nativo (Kotlin) para el [firmware del NodeMCU](../firmware/riego_nodemcu). Muestra el estado de los sensores en vivo y permite cambiar de modo AUTOMÁTICO/MANUAL y encender/apagar la bomba, **solo dentro de la misma red WiFi** que el NodeMCU — no usa internet ni servidores externos.
 
 <p align="center">
-  <img src="docs/login.png" alt="Pantalla de login de la app" width="280">
+  <img src="docs/login.png" alt="Pantalla de login de la app" width="270">
+  <img src="docs/dashboard.png" alt="Dashboard con paneles plegables" width="270">
 </p>
 
-<p align="center"><em>Captura real desde el emulador. El dashboard (paneles de Percepción/Procesamiento/Aplicación) todavía no tiene captura — falta conectar un NodeMCU real para probarlo de punta a punta.</em></p>
+<p align="center"><em>Capturas reales desde el emulador. El dashboard muestra "--" porque todavía no hay un NodeMCU real conectado enviando datos.</em></p>
 
 ## ⚠️ Antes de abrir el proyecto
 
