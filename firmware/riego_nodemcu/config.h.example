@@ -1,0 +1,12 @@
+// Copia este archivo como "config.h" y completa tus datos.
+// config.h esta en .gitignore: NO se sube a GitHub.
+
+#pragma once
+
+// --- WiFi (usa el hotspot del celular si la red de la U bloquea conexiones) ---
+#define WIFI_SSID "TU_WIFI"
+#define WIFI_PASS "TU_CLAVE"
+
+// --- Clave para los botones de la pagina web (cambiala) ---
+#define WEB_USER "admin"
+#define WEB_PASS "cambia-esta-clave"

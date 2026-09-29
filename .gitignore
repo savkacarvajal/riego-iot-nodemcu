@@ -1,0 +1,10 @@
+# Credenciales locales (WiFi y clave web)
+firmware/riego_nodemcu/config.h
+
+# Arduino / IDE
+build/
+*.bin
+*.elf
+.vscode/
+.idea/
+.DS_Store
