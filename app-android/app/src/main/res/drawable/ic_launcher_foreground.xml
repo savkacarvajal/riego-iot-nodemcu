@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Tallo -->
+    <path
+        android:pathData="M54,68 L54,86"
+        android:strokeColor="#F5F3FF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round" />
+    <!-- Hoja izquierda -->
+    <path
+        android:fillColor="#F5F3FF"
+        android:pathData="M54,68 C53.52,53.36 43.92,40.56 30,36 C30.48,50.64 40.08,63.44 54,68 Z" />
+    <!-- Hoja derecha -->
+    <path
+        android:fillColor="#F5F3FF"
+        android:pathData="M54,68 C54.48,53.36 64.08,40.56 78,36 C77.52,50.64 67.92,63.44 54,68 Z" />
+</vector>

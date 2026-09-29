@@ -15,7 +15,6 @@ Confirmado: Android Studio sincroniza y compila este proyecto sin problema (prob
 
 1. Abre la carpeta `app-android/` como proyecto en Android Studio (**File → Open**).
 2. Deja que sincronice (descarga el SDK/dependencias la primera vez).
-3. El ícono de la app es un placeholder del sistema (`@android:drawable/sym_def_app_icon`) — puedes reemplazarlo con **Image Asset Studio** cuando quieras.
 
 ## ▶️ Uso
 
@@ -28,6 +27,8 @@ Confirmado: Android Studio sincroniza y compila este proyecto sin problema (prob
 ## 🎨 Diseño
 
 Fondo con degradado violeta y manchas de color difuminadas de verdad (`RenderEffect`, Android 12+; en versiones anteriores se ven como un resplandor suave sin desenfoque). Tarjetas tipo "glass" semi-transparentes con borde violeta sutil y esquinas redondeadas, usando `MaterialCardView` — sin librerías nuevas, ya viene con Material Components.
+
+Ícono propio (`ic_launcher`/`ic_launcher_round`): un brote de dos hojas sobre el mismo degradado violeta, como adaptive icon (`mipmap-anydpi-v26`, Android 8+) con respaldo en PNG para API 24-25.
 
 ## 🧱 Stack
 
