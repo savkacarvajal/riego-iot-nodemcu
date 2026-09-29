@@ -36,13 +36,20 @@ class MainActivity : AppCompatActivity() {
         aplicarBlurDecorativo()
 
         val ip = prefs.getString("ip", "") ?: ""
-        if (ip.isBlank()) {
-            // No hay conexion guardada (ej. se borraron los datos de la app):
-            // vuelve al login en vez de mostrar un dashboard sin datos.
+        val claveCifrada = prefs.getString("clave_cifrada", null)
+        val ivClave = prefs.getString("clave_iv", null)
+        val clave = if (claveCifrada != null && ivClave != null) {
+            SeguridadLocal.descifrar(claveCifrada, ivClave)
+        } else null
+
+        if (ip.isBlank() || clave == null) {
+            // No hay conexion guardada, o la clave no se pudo descifrar (ej.
+            // se reinstalo la app y el Keystore perdio la llave): vuelve al
+            // login en vez de mostrar un dashboard sin datos validos.
             irALogin()
             return
         }
-        api = RiegoApiClient(ip, prefs.getString("usuario", "") ?: "", prefs.getString("clave", "") ?: "")
+        api = RiegoApiClient(ip, prefs.getString("usuario", "") ?: "", clave)
 
         configurarSeccionesPlegables()
         binding.btnCambiarConexion.setOnClickListener { irALogin() }

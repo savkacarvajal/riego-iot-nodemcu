@@ -31,7 +31,11 @@ class LoginActivity : AppCompatActivity() {
 
         binding.inputIp.setText(prefs.getString("ip", ""))
         binding.inputUsuario.setText(prefs.getString("usuario", "admin"))
-        binding.inputClave.setText(prefs.getString("clave", ""))
+        val claveCifrada = prefs.getString("clave_cifrada", null)
+        val ivClave = prefs.getString("clave_iv", null)
+        if (claveCifrada != null && ivClave != null) {
+            binding.inputClave.setText(SeguridadLocal.descifrar(claveCifrada, ivClave) ?: "")
+        }
 
         binding.btnConectar.setOnClickListener { intentarConectar() }
 
@@ -57,10 +61,12 @@ class LoginActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) { cliente.obtenerEstado() }
+                val (claveCifrada, ivClave) = SeguridadLocal.cifrar(clave)
                 prefs.edit()
                     .putString("ip", ip)
                     .putString("usuario", usuario)
-                    .putString("clave", clave)
+                    .putString("clave_cifrada", claveCifrada)
+                    .putString("clave_iv", ivClave)
                     .apply()
                 startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                 finish()

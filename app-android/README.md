@@ -34,7 +34,7 @@ Fondo con degradado violeta y manchas de color difuminadas de verdad (`RenderEff
 - Kotlin, Views + ViewBinding (sin Compose, para mantenerlo simple)
 - OkHttp para las llamadas HTTP con Basic Auth
 - Corrutinas (`lifecycleScope`) para el polling cada 2 s
-- `SharedPreferences` para recordar IP/usuario/clave entre sesiones
+- `SharedPreferences` para IP/usuario (no son secretos); la clave se guarda cifrada con Android Keystore (ver [Seguridad](#-seguridad))
 - `minSdk 24`, sin dependencias de nube
 
 ## 🌐 Endpoints que consume
@@ -51,6 +51,10 @@ Los mismos que expone el firmware (ver [README principal](../README.md#-cómo-fu
 
 La tarjeta de luz solo aparece en la app si el NodeMCU detectó un BH1750 conectado al arrancar (`luxLuz` no es `null` en `/api/estado`); si no hay sensor, la tarjeta queda oculta sin romper nada.
 
-## 🔓 Por qué permite tráfico HTTP sin cifrar
+## 🔒 Seguridad
 
-El NodeMCU no tiene HTTPS — solo sirve HTTP plano en la red local. `network_security_config.xml` habilita cleartext a propósito, documentado ahí mismo. No expongas el NodeMCU a internet.
+Medidas reales, calibradas a lo que es este dispositivo (un NodeMCU casero en una sola red WiFi de confianza, un solo usuario) — no una réplica de arquitecturas empresariales:
+
+- **Clave cifrada en reposo**: la clave del NodeMCU se cifra con AES-256-GCM usando una llave que nunca sale del Android Keystore (respaldada por hardware cuando el equipo lo soporta) — ver [`SeguridadLocal.kt`](app/src/main/java/com/savkacarvajal/riegoiot/SeguridadLocal.kt). IP y usuario no son secretos, se guardan en texto plano. Si desinstalas la app, la llave del Keystore se pierde junto con ella — es lo esperado, no un bug.
+- **Bloqueo por fuerza bruta**: el firmware bloquea todo acceso durante 1 minuto tras 5 intentos de login fallidos seguidos (ver `autorizado()` en el `.ino`). El contador es global, no por IP: es una limitación consciente, correcta para un dispositivo de un solo hogar.
+- **Por qué el tráfico va sin cifrar (HTTP, no HTTPS)**: el NodeMCU no tiene HTTPS — evaluamos agregar TLS (BearSSL) y lo descartamos: en un ESP8266 con ~30 KB de RAM libre, una conexión TLS puede necesitar ~28 KB solo de buffers, con riesgo real de que el dispositivo se cuelgue. `network_security_config.xml` habilita cleartext a propósito, documentado ahí mismo. Esto significa que alguien con acceso a tu WiFi y un sniffer podría ver la clave viajar (en Basic Auth, base64 sin cifrar) — por eso el diseño exige una red doméstica de confianza y **nunca** exponer el NodeMCU a internet.

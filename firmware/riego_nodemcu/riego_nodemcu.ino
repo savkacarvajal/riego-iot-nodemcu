@@ -63,6 +63,16 @@ bool modoAuto = true;
 bool bombaOn = false;
 unsigned long bombaDesde = 0, bloqueoHasta = 0, ultimaLectura = 0;
 
+// ---------------- Bloqueo por intentos de login fallidos ----------------
+// Mitiga fuerza bruta desde un dispositivo comprometido en la misma red.
+// El contador es global (no por IP): tras varios intentos fallidos de
+// cualquiera, se bloquea TODO acceso un rato. Correcto para un dispositivo
+// de un solo hogar; no escalaria a un despliegue multiusuario.
+int fallosAuth = 0;
+unsigned long bloqueoAuthHasta = 0;
+const int MAX_FALLOS_AUTH = 5;
+const unsigned long BLOQUEO_AUTH_MS = 60000UL;   // 1 min
+
 // ---------------- Historial de riego ----------------
 // Buffer circular en RAM (se pierde al reiniciar; no hay RTC en esta placa).
 // Cada riego que termina se registra con "hace cuanto empezo" (relativo a
@@ -115,7 +125,19 @@ void logicaRiego() {
 }
 
 bool autorizado() {
-  if (server.authenticate(WEB_USER, WEB_PASS)) return true;
+  if (millis() < bloqueoAuthHasta) {
+    server.send(429, "text/plain", "Demasiados intentos fallidos. Espera un momento.");
+    return false;
+  }
+  if (server.authenticate(WEB_USER, WEB_PASS)) {
+    fallosAuth = 0;
+    return true;
+  }
+  fallosAuth++;
+  if (fallosAuth >= MAX_FALLOS_AUTH) {
+    bloqueoAuthHasta = millis() + BLOQUEO_AUTH_MS;
+    Serial.println("[SEGURIDAD] Bloqueo temporal por intentos de login fallidos");
+  }
   server.requestAuthentication();
   return false;
 }

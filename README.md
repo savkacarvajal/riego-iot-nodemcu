@@ -126,7 +126,7 @@ Si la red de la universidad bloquea la conexión, usa el hotspot del celular.
 - **Manual:** botones ENCENDER / APAGAR en la página.
 - **Seguridad:** la bomba se corta sola tras 15 s seguidos y espera 60 s antes de volver a regar. Evita que corra en seco o inunde la maceta si el sensor falla.
 - **Sin WiFi:** el riego automático sigue funcionando; solo se pierde el control remoto.
-- **Página web y app:** piden usuario y clave (definidos en `config.h`, HTTP Basic Auth) y solo funcionan dentro de la red WiFi del NodeMCU — no hay nube ni servidor externo. Va sobre HTTP sin cifrar: úsalas solo en una red local de confianza y no expongas el NodeMCU a internet.
+- **Página web y app:** piden usuario y clave (definidos en `config.h`, HTTP Basic Auth) y solo funcionan dentro de la red WiFi del NodeMCU — no hay nube ni servidor externo. Va sobre HTTP sin cifrar: úsalas solo en una red local de confianza y no expongas el NodeMCU a internet. Tras 5 intentos de login fallidos, el NodeMCU bloquea todo acceso por 1 minuto (mitiga fuerza bruta). Detalle completo, incluyendo por qué se descartó TLS, en [Seguridad de la app](app-android/README.md#-seguridad).
 - **Página web:** se sirve directamente desde el NodeMCU (`GET /`) y se actualiza sola cada 2 s llamando a la API JSON por `fetch()`, sin recargar la página completa.
 
 ## 📡 API JSON
