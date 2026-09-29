@@ -21,8 +21,9 @@ Confirmado: Android Studio sincroniza y compila este proyecto sin problema (prob
 1. Sube el firmware al NodeMCU y anota la IP que imprime por el Monitor Serial (`http://192.168.x.x`).
 2. Conecta el celular a la **misma red WiFi**.
 3. Abre la app: primero pide login (IP sin `http://`, usuario y clave de `config.h` — `WEB_USER`/`WEB_PASS`). El botón **"Conectar"** prueba la conexión de verdad (llama a `/api/estado`) antes de dejarte entrar; si falla, muestra el error ahí mismo sin avanzar.
-4. Ya dentro, el dashboard organiza todo en paneles plegables por capa (tócalos para abrir/cerrar): **Percepción** (sensores, abierto por defecto), **Procesamiento** (modo y control de la bomba) y **Aplicación** (registros de riego de las últimas 24 h). Arriba a la derecha, **"🔌 Cambiar conexión"** vuelve al login para apuntar a otro NodeMCU.
-5. La pantalla se actualiza sola cada 2 s. Los botones ENCENDER/APAGAR solo aparecen en modo MANUAL.
+4. Ya dentro, el dashboard organiza todo en paneles plegables por capa (tócalos para abrir/cerrar): **Percepción** (sensores, abierto por defecto), **Procesamiento** (modo, control de la bomba y umbrales de riego automático) y **Aplicación** (registros de riego de las últimas 24 h). Arriba a la derecha, **"🔌 Cambiar conexión"** vuelve al login para apuntar a otro NodeMCU.
+5. Dentro de **Procesamiento**, "Riega bajo %" y "Apaga sobre %" ajustan los umbrales del modo automático sin reflashear el NodeMCU — **"Guardar umbrales"** los manda al firmware y confirma. Se pierden al reiniciar el NodeMCU (viven en RAM, igual que el resto de la calibración).
+6. La pantalla se actualiza sola cada 2 s. Los botones ENCENDER/APAGAR solo aparecen en modo MANUAL.
 
 ## 🎨 Diseño
 
@@ -46,6 +47,8 @@ Los mismos que expone el firmware (ver [README principal](../README.md#-cómo-fu
 |---|---|---|
 | GET | `/api/estado` | Estado actual (temperatura, humedad, suelo, luz, modo, bomba) |
 | GET | `/api/historial` | Riegos de las últimas 24 h (relativo a `millis()`, se pierde al reiniciar) |
+| GET | `/api/umbrales` | Umbrales actuales del modo automático |
+| POST | `/api/umbrales` | Actualiza los umbrales (`umbralRiego`/`umbralApaga`, form-encoded; rechaza valores fuera de 0-100 o donde apagar ≤ regar) |
 | POST | `/api/modo` | Alterna AUTOMÁTICO/MANUAL |
 | POST | `/api/on` | Enciende la bomba (solo en MANUAL) |
 | POST | `/api/off` | Apaga la bomba (solo en MANUAL) |

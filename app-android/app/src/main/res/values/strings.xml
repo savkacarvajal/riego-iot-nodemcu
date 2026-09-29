@@ -49,4 +49,11 @@
     <string name="label_capa_procesamiento_subtitulo">Modo y control de riego</string>
     <string name="label_capa_aplicacion">📊 Aplicación</string>
     <string name="label_capa_aplicacion_subtitulo">Registros de riego</string>
+
+    <string name="label_umbrales">Umbrales de riego automático</string>
+    <string name="hint_umbral_riego">Riega bajo %</string>
+    <string name="hint_umbral_apaga">Apaga sobre %</string>
+    <string name="btn_guardar_umbrales">Guardar umbrales</string>
+    <string name="umbrales_guardados">✓ Umbrales guardados</string>
+    <string name="error_umbrales">El umbral de apagado debe ser mayor al de riego, ambos entre 0 y 100.</string>
 </resources>

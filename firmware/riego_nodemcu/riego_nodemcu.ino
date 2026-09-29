@@ -188,6 +188,40 @@ void apiHistorial() {
   server.send(200, "application/json", historialJson());
 }
 
+// JSON de los umbrales de riego automatico actuales.
+String umbralesJson() {
+  String j = "{";
+  j += "\"umbralRiego\":" + String(UMBRAL_RIEGO) + ",";
+  j += "\"umbralApaga\":" + String(UMBRAL_APAGA);
+  j += "}";
+  return j;
+}
+
+void apiUmbrales() {
+  if (!autorizado()) return;
+  server.send(200, "application/json", umbralesJson());
+}
+
+// Los umbrales viven en RAM (como el resto de la calibracion): vuelven a
+// sus valores por defecto si el NodeMCU se reinicia.
+void apiUmbralesSet() {
+  if (!autorizado()) return;
+  if (server.hasArg("umbralRiego") && server.hasArg("umbralApaga")) {
+    int nuevoRiego = server.arg("umbralRiego").toInt();
+    int nuevoApaga = server.arg("umbralApaga").toInt();
+    bool valido = nuevoRiego >= 0 && nuevoRiego <= 100 &&
+                  nuevoApaga >= 0 && nuevoApaga <= 100 &&
+                  nuevoApaga > nuevoRiego;
+    if (!valido) {
+      server.send(400, "application/json", "{\"error\":\"umbrales invalidos\"}");
+      return;
+    }
+    UMBRAL_RIEGO = nuevoRiego;
+    UMBRAL_APAGA = nuevoApaga;
+  }
+  server.send(200, "application/json", umbralesJson());
+}
+
 void apiModo() {
   if (!autorizado()) return;
   modoAuto = !modoAuto;
@@ -290,6 +324,8 @@ void setup() {
   server.on("/", HTTP_GET, paginaPrincipal);
   server.on("/api/estado", HTTP_GET,  apiEstado);
   server.on("/api/historial", HTTP_GET, apiHistorial);
+  server.on("/api/umbrales", HTTP_GET, apiUmbrales);
+  server.on("/api/umbrales", HTTP_POST, apiUmbralesSet);
   server.on("/api/modo",   HTTP_POST, apiModo);
   server.on("/api/on",     HTTP_POST, apiOn);
   server.on("/api/off",    HTTP_POST, apiOff);

@@ -1,6 +1,7 @@
 package com.savkacarvajal.riegoiot
 
 import okhttp3.Credentials
+import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -21,6 +22,11 @@ data class EstadoRiego(
 data class EventoRiego(
     val haceMin: Int,
     val duracionS: Int
+)
+
+data class Umbrales(
+    val umbralRiego: Int,
+    val umbralApaga: Int
 )
 
 class ApiException(message: String) : Exception(message)
@@ -45,12 +51,29 @@ class RiegoApiClient(ip: String, usuario: String, clave: String) {
     fun encender(): EstadoRiego = parsearEstado(llamar("/api/on", post = true))
     fun apagar(): EstadoRiego = parsearEstado(llamar("/api/off", post = true))
     fun obtenerHistorial(): List<EventoRiego> = parsearHistorial(llamar("/api/historial", post = false))
+    fun obtenerUmbrales(): Umbrales = parsearUmbrales(llamar("/api/umbrales", post = false))
 
-    private fun llamar(path: String, post: Boolean): String {
+    fun actualizarUmbrales(umbralRiego: Int, umbralApaga: Int): Umbrales = parsearUmbrales(
+        llamar(
+            "/api/umbrales", post = true,
+            formParams = mapOf("umbralRiego" to umbralRiego.toString(), "umbralApaga" to umbralApaga.toString())
+        )
+    )
+
+    private fun llamar(path: String, post: Boolean, formParams: Map<String, String>? = null): String {
         val builder = Request.Builder()
             .url(baseUrl + path)
             .header("Authorization", credencial)
-        if (post) builder.post(ByteArray(0).toRequestBody(null))
+        if (post) {
+            val cuerpo = if (formParams != null) {
+                val fb = FormBody.Builder()
+                formParams.forEach { (k, v) -> fb.add(k, v) }
+                fb.build()
+            } else {
+                ByteArray(0).toRequestBody(null)
+            }
+            builder.post(cuerpo)
+        }
 
         client.newCall(builder.build()).execute().use { resp ->
             if (resp.code == 401) throw ApiException("credenciales")
@@ -78,5 +101,10 @@ class RiegoApiClient(ip: String, usuario: String, clave: String) {
             val e = arr.getJSONObject(i)
             EventoRiego(haceMin = e.getInt("haceMin"), duracionS = e.getInt("duracionS"))
         }
+    }
+
+    private fun parsearUmbrales(cuerpo: String): Umbrales {
+        val j = JSONObject(cuerpo)
+        return Umbrales(umbralRiego = j.getInt("umbralRiego"), umbralApaga = j.getInt("umbralApaga"))
     }
 }

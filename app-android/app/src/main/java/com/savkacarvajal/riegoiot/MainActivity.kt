@@ -56,7 +56,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnCambiarModo.setOnClickListener { ejecutar { it.cambiarModo() } }
         binding.btnEncender.setOnClickListener { ejecutar { it.encender() } }
         binding.btnApagar.setOnClickListener { ejecutar { it.apagar() } }
+        binding.btnGuardarUmbrales.setOnClickListener { guardarUmbrales() }
 
+        cargarUmbrales()
         pollingJob = lifecycleScope.launch {
             while (isActive) {
                 actualizarEstado()
@@ -124,6 +126,48 @@ class MainActivity : AppCompatActivity() {
             // El historial es informacion secundaria: si falla, se deja el ultimo
             // valor pintado en vez de tapar la pantalla con un error.
         }
+    }
+
+    // Los umbrales cambian poco: se cargan una vez al entrar, no en cada
+    // ciclo de polling (asi no se pisa lo que el usuario este editando).
+    private fun cargarUmbrales() {
+        lifecycleScope.launch {
+            try {
+                val umbrales = withContext(Dispatchers.IO) { api.obtenerUmbrales() }
+                pintarUmbrales(umbrales)
+            } catch (e: Exception) {
+                // Si falla, los campos quedan vacios; guardar reintenta la conexion.
+            }
+        }
+    }
+
+    private fun pintarUmbrales(umbrales: Umbrales) {
+        binding.inputUmbralRiego.setText(umbrales.umbralRiego.toString())
+        binding.inputUmbralApaga.setText(umbrales.umbralApaga.toString())
+    }
+
+    private fun guardarUmbrales() {
+        val riego = binding.inputUmbralRiego.text.toString().toIntOrNull()
+        val apaga = binding.inputUmbralApaga.text.toString().toIntOrNull()
+        if (riego == null || apaga == null || riego !in 0..100 || apaga !in 0..100 || apaga <= riego) {
+            mostrarEstadoUmbrales(getString(R.string.error_umbrales), esError = true)
+            return
+        }
+        lifecycleScope.launch {
+            try {
+                val umbrales = withContext(Dispatchers.IO) { api.actualizarUmbrales(riego, apaga) }
+                pintarUmbrales(umbrales)
+                mostrarEstadoUmbrales(getString(R.string.umbrales_guardados), esError = false)
+            } catch (e: Exception) {
+                mostrarEstadoUmbrales(getString(R.string.error_conexion), esError = true)
+            }
+        }
+    }
+
+    private fun mostrarEstadoUmbrales(mensaje: String, esError: Boolean) {
+        binding.tvUmbralesEstado.text = mensaje
+        binding.tvUmbralesEstado.setTextColor(getColor(if (esError) R.color.error else R.color.primario_oscuro))
+        binding.tvUmbralesEstado.visibility = View.VISIBLE
     }
 
     private fun ejecutar(accion: suspend (RiegoApiClient) -> EstadoRiego) {

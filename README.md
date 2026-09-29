@@ -118,7 +118,7 @@ Si la red de la universidad bloquea la conexión, usa el hotspot del celular.
 
 1. Con el sensor **al aire**, anota el valor `raw` del Monitor Serial → `RAW_SECO`.
 2. Con el sensor **en un vaso con agua**, anota el `raw` → `RAW_HUMEDO`.
-3. Ajusta `UMBRAL_RIEGO` (riega bajo ese %) y `UMBRAL_APAGA` (deja de regar sobre ese %).
+3. Ajusta `UMBRAL_RIEGO` (riega bajo ese %) y `UMBRAL_APAGA` (deja de regar sobre ese %) — estos dos también se pueden cambiar en caliente, sin reflashear, desde la app Android (panel **Procesamiento**) o llamando a `/api/umbrales`.
 
 ## 🧠 Cómo funciona
 
@@ -137,11 +137,13 @@ El NodeMCU expone estos endpoints (todos protegidos con el mismo usuario/clave q
 |---|---|---|---|
 | GET | `/api/estado` | Estado actual | `{"tempC":21.4,"humAire":55,"humSuelo":38,"rawSuelo":612,"luxLuz":320,"modoAuto":true,"bombaOn":false}` |
 | GET | `/api/historial` | Riegos de las últimas 24 h, más reciente primero | `[{"haceMin":18,"duracionS":12}, ...]` |
+| GET | `/api/umbrales` | Umbrales actuales del modo automático | `{"umbralRiego":40,"umbralApaga":55}` |
+| POST | `/api/umbrales` | Actualiza los umbrales (`umbralRiego`/`umbralApaga`, form-encoded) | mismo JSON de umbrales, o `400` si son inválidos |
 | POST | `/api/modo` | Alterna AUTOMÁTICO/MANUAL | mismo JSON de estado, ya actualizado |
 | POST | `/api/on` | Enciende la bomba (solo si está en MANUAL) | mismo JSON de estado |
 | POST | `/api/off` | Apaga la bomba (solo si está en MANUAL) | mismo JSON de estado |
 
-`tempC`/`humAire` llegan como `null` si el DHT22 aún no entrega una lectura válida. `luxLuz` llega como `null` si no se detectó un BH1750 al arrancar. El historial vive en RAM (sin RTC): los tiempos son relativos a `millis()` y se pierden al reiniciar el NodeMCU.
+`tempC`/`humAire` llegan como `null` si el DHT22 aún no entrega una lectura válida. `luxLuz` llega como `null` si no se detectó un BH1750 al arrancar. El historial y los umbrales cambiados por API viven en RAM (sin RTC ni flash): se pierden al reiniciar el NodeMCU y vuelven a los valores de `riego_nodemcu.ino`.
 
 ## 📱 App Android
 
