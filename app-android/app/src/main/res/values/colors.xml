@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primario">#2B6CB0</color>
-    <color name="primario_oscuro">#1A4E8A</color>
-    <color name="fondo">#F7FAFC</color>
-    <color name="tarjeta">#FFFFFF</color>
-    <color name="texto">#1A202C</color>
-    <color name="texto_secundario">#4A5568</color>
-    <color name="error">#C53030</color>
+    <color name="primario">#8B5CF6</color>
+    <color name="primario_oscuro">#6D28D9</color>
+    <color name="primario_claro">#C4B5FD</color>
+    <color name="fondo_inicio">#F5F3FF</color>
+    <color name="fondo_fin">#E9E1FC</color>
+    <color name="tarjeta">#F2FFFFFF</color>
+    <color name="tarjeta_borde">#338B5CF6</color>
+    <color name="texto">#241B3A</color>
+    <color name="texto_secundario">#6B5E8C</color>
+    <color name="error">#DC2626</color>
+    <color name="divisor">#E4D9FB</color>
+    <color name="blob_uno">#B794F6</color>
+    <color name="blob_dos">#9F7AEA</color>
 </resources>

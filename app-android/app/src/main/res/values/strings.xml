@@ -6,10 +6,15 @@
     <string name="hint_usuario">Usuario</string>
     <string name="hint_clave">Clave</string>
     <string name="btn_conectar">Conectar</string>
+    <string name="btn_conectando">Conectando…</string>
     <string name="btn_guardar">Guardar y probar conexión</string>
+    <string name="label_login_subtitulo">Conéctate a tu NodeMCU</string>
+    <string name="btn_cambiar_conexion">🔌 Cambiar conexión</string>
 
     <string name="label_suelo">Suelo</string>
     <string name="label_aire">Aire</string>
+    <string name="label_luz">Luz</string>
+    <string name="formato_lux">%d lux</string>
     <string name="label_modo">Modo</string>
     <string name="label_bomba">Bomba</string>
     <string name="valor_pendiente">--</string>
@@ -25,4 +30,23 @@
 
     <string name="error_conexion">No se pudo conectar. Revisa la IP y que el celular esté en la misma WiFi que el NodeMCU.</string>
     <string name="error_credenciales">Usuario o clave incorrectos.</string>
+
+    <string name="label_historial">Historial de riego</string>
+    <string name="label_historial_subtitulo">Últimas 24 horas</string>
+    <string name="label_historial_vacio">Sin riegos registrados en las últimas 24 h.</string>
+    <string name="formato_hace_min">hace %d min</string>
+    <string name="formato_hace_horas">hace %1$d h %2$d min</string>
+    <string name="formato_duracion">%d s</string>
+
+    <string name="chevron_abierto">▾</string>
+    <string name="chevron_cerrado">▸</string>
+
+    <string name="label_capa_red">📶 Red</string>
+    <string name="label_capa_red_subtitulo">Conexión al NodeMCU</string>
+    <string name="label_capa_percepcion">🌡️ Percepción</string>
+    <string name="label_capa_percepcion_subtitulo">Sensores en vivo</string>
+    <string name="label_capa_procesamiento">⚙️ Procesamiento</string>
+    <string name="label_capa_procesamiento_subtitulo">Modo y control de riego</string>
+    <string name="label_capa_aplicacion">📊 Aplicación</string>
+    <string name="label_capa_aplicacion_subtitulo">Registros de riego</string>
 </resources>

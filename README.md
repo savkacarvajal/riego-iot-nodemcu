@@ -48,7 +48,10 @@ Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo r
 | Sensor de humedad de suelo (analógico) | Humedad del suelo |
 | Mini bomba sumergible 3–6 V | Riego |
 | Protoboard y cables | Conexiones |
+| *(opcional)* BH1750 | Intensidad de luz (I2C) — si no está conectado, el firmware lo detecta al arrancar y simplemente omite esa lectura |
 | *(para la bomba real)* transistor NPN + resistencia + diodo, relé o driver | Interruptor de la bomba |
+
+> **Pendiente, no incluido:** un anemómetro (sensor de viento) requeriría un ADC externo por I2C (ej. ADS1115), porque el ESP8266 solo tiene un pin analógico (A0) y ya lo usa el sensor de suelo.
 
 ## 🔌 Conexión
 
@@ -60,6 +63,9 @@ Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo r
 | Sensor de suelo | AO | A0 |
 | Sensor de suelo | VCC | 3V3 |
 | Sensor de suelo | GND | GND |
+| BH1750 (opcional) | SDA | D2 |
+| BH1750 (opcional) | SCL | D1 |
+| BH1750 (opcional) | VCC / GND | 3V3 / GND |
 | Bomba virtual | LED integrado | (ya viene en la placa) |
 
 Todos los GND van al mismo riel de GND (masa común).
@@ -96,7 +102,7 @@ Para probar la bomba suelta, sin código: rojo a VIN y negro a GND, **sumergida*
 1. Arduino IDE → **Archivo → Preferencias** → en "Gestor de URLs adicionales" agrega:
    `http://arduino.esp8266.com/stable/package_esp8266com_index.json`
 2. **Herramientas → Placa → Gestor de tarjetas**: instala **esp8266**. Elige **NodeMCU 1.0 (ESP-12E Module)**.
-3. **Administrar bibliotecas**: instala **DHT sensor library** y **Adafruit Unified Sensor**.
+3. **Administrar bibliotecas**: instala **DHT sensor library**, **Adafruit Unified Sensor** y **BH1750** (esta última solo hace falta si vas a conectar el sensor de luz).
 4. Copia `firmware/riego_nodemcu/config.h.example` como `config.h` y completa tu WiFi y la clave de la página.
 5. Abre `firmware/riego_nodemcu/riego_nodemcu.ino`, elige el puerto y sube el código.
 6. Abre el Monitor Serial a **115200**: verás la IP (`http://192.168.x.x`). Ábrela en el celular, en la misma red.
@@ -124,12 +130,13 @@ El NodeMCU expone estos endpoints (todos protegidos con el mismo usuario/clave q
 
 | Método | Ruta | Qué hace | Respuesta |
 |---|---|---|---|
-| GET | `/api/estado` | Estado actual | `{"tempC":21.4,"humAire":55,"humSuelo":38,"rawSuelo":612,"modoAuto":true,"bombaOn":false}` |
+| GET | `/api/estado` | Estado actual | `{"tempC":21.4,"humAire":55,"humSuelo":38,"rawSuelo":612,"luxLuz":320,"modoAuto":true,"bombaOn":false}` |
+| GET | `/api/historial` | Riegos de las últimas 24 h, más reciente primero | `[{"haceMin":18,"duracionS":12}, ...]` |
 | POST | `/api/modo` | Alterna AUTOMÁTICO/MANUAL | mismo JSON de estado, ya actualizado |
 | POST | `/api/on` | Enciende la bomba (solo si está en MANUAL) | mismo JSON de estado |
 | POST | `/api/off` | Apaga la bomba (solo si está en MANUAL) | mismo JSON de estado |
 
-`tempC`/`humAire` llegan como `null` si el DHT22 aún no entrega una lectura válida.
+`tempC`/`humAire` llegan como `null` si el DHT22 aún no entrega una lectura válida. `luxLuz` llega como `null` si no se detectó un BH1750 al arrancar. El historial vive en RAM (sin RTC): los tiempos son relativos a `millis()` y se pierden al reiniciar el NodeMCU.
 
 ## 📱 App Android
 

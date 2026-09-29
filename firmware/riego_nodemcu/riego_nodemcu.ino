@@ -2,6 +2,7 @@
   Riego IoT con NodeMCU (ESP8266)
   - Lee temperatura y humedad del aire (DHT22)
   - Lee humedad del suelo (sensor analogico en A0)
+  - Lee intensidad de luz (BH1750, I2C) — opcional, se autodetecta al arrancar
   - Riega en modo AUTO segun un umbral, o en modo MANUAL desde una pagina web
   - Salida de "bomba": por defecto el LED integrado (bomba virtual).
     Cuando tengas transistor/rele/driver, cambia PIN_BOMBA y BOMBA_ACTIVA_EN_HIGH.
@@ -9,17 +10,28 @@
   Librerias (Arduino IDE -> Administrar bibliotecas):
     - DHT sensor library (Adafruit)
     - Adafruit Unified Sensor
+    - BH1750 (claws) — solo si conectas el sensor de luz
+
+  Nota: el anemometro del informe de la U (0-5V analogico) NO cabe en este
+  NodeMCU: el ESP8266 solo tiene un pin analogico (A0) y ya lo ocupa el
+  sensor de suelo. Para agregarlo hace falta un ADC externo (ej. ADS1115
+  por I2C, mismo bus que el BH1750) — pendiente hasta tener ese modulo.
+
   Placa: NodeMCU 1.0 (ESP-12E Module), Serial a 115200.
 */
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <Wire.h>
 #include <DHT.h>
+#include <BH1750.h>
 #include "config.h"   // copia config.h.example -> config.h
 
 // ---------------- Pines ----------------
 #define PIN_DHT    D5          // DHT22 (DAT). Evitamos D4: es GPIO2, comparte el LED azul
 #define PIN_SUELO  A0          // sensor de suelo (AO)
+#define PIN_SDA    D2          // BH1750 SDA (bus I2C)
+#define PIN_SCL    D1          // BH1750 SCL (bus I2C)
 
 // Salida de la bomba.
 //  Bomba virtual (LED integrado): PIN_BOMBA LED_BUILTIN, ACTIVA_EN_HIGH false (el LED es invertido)
@@ -40,17 +52,37 @@ const unsigned long ESPERA_MS      = 60000UL;  // pausa minima tras un corte por
 const unsigned long LECTURA_MS     = 2000UL;   // cada cuanto se leen los sensores
 
 DHT dht(PIN_DHT, DHT22);
+BH1750 bh1750;
 ESP8266WebServer server(80);
 
 float tempC = NAN, humAire = NAN;
 int rawSuelo = 0, humSuelo = 0;
+float luxLuz = NAN;
+bool luzDisponible = false;   // true si el BH1750 respondio al arrancar
 bool modoAuto = true;
 bool bombaOn = false;
 unsigned long bombaDesde = 0, bloqueoHasta = 0, ultimaLectura = 0;
 
+// ---------------- Historial de riego ----------------
+// Buffer circular en RAM (se pierde al reiniciar; no hay RTC en esta placa).
+// Cada riego que termina se registra con "hace cuanto empezo" (relativo a
+// millis()) para poder filtrar los ultimos 24 h sin depender de hora real.
+#define HIST_MAX 48
+struct EventoRiego { unsigned long inicioMs; unsigned long duracionMs; };
+EventoRiego historial[HIST_MAX];
+int histCount = 0;
+int histHead = 0;   // proximo indice a escribir
+
+void registrarRiego(unsigned long inicioMs, unsigned long duracionMs) {
+  historial[histHead] = { inicioMs, duracionMs };
+  histHead = (histHead + 1) % HIST_MAX;
+  if (histCount < HIST_MAX) histCount++;
+}
+
 void setBomba(bool on) {
   if (on && millis() < bloqueoHasta) return;   // en pausa por seguridad
   if (on && !bombaOn) bombaDesde = millis();
+  if (!on && bombaOn) registrarRiego(bombaDesde, millis() - bombaDesde);
   bombaOn = on;
   digitalWrite(PIN_BOMBA, (on == BOMBA_ACTIVA_EN_HIGH) ? HIGH : LOW);
 }
@@ -62,6 +94,11 @@ void leerSensores() {
   if (!isnan(h)) humAire = h;
   rawSuelo = analogRead(PIN_SUELO);
   humSuelo = constrain(map(rawSuelo, RAW_SECO, RAW_HUMEDO, 0, 100), 0, 100);
+
+  if (luzDisponible) {
+    float l = bh1750.readLightLevel();
+    if (l >= 0) luxLuz = l;   // el BH1750 devuelve negativo si la lectura fallo
+  }
 }
 
 void logicaRiego() {
@@ -91,6 +128,7 @@ String estadoJson() {
   j += "\"humAire\":"  + (isnan(humAire) ? String("null") : String(humAire, 0)) + ",";
   j += "\"humSuelo\":" + String(humSuelo) + ",";
   j += "\"rawSuelo\":" + String(rawSuelo) + ",";
+  j += "\"luxLuz\":" + (luzDisponible && !isnan(luxLuz) ? String(luxLuz, 0) : String("null")) + ",";
   j += "\"modoAuto\":" + String(modoAuto ? "true" : "false") + ",";
   j += "\"bombaOn\":"  + String(bombaOn  ? "true" : "false");
   j += "}";
@@ -100,6 +138,32 @@ String estadoJson() {
 void apiEstado() {
   if (!autorizado()) return;
   server.send(200, "application/json", estadoJson());
+}
+
+// JSON del historial de riego de las ultimas 24 h, mas reciente primero.
+// "haceMin": minutos desde que empezo ese riego. "duracionS": cuanto duro.
+String historialJson() {
+  const unsigned long VENTANA_MS = 24UL * 60UL * 60UL * 1000UL;
+  unsigned long ahora = millis();
+  String j = "[";
+  int n = min(histCount, HIST_MAX);
+  bool primero = true;
+  for (int i = 0; i < n; i++) {
+    int idx = (histHead - 1 - i + HIST_MAX) % HIST_MAX;
+    unsigned long antiguedad = ahora - historial[idx].inicioMs;
+    if (antiguedad > VENTANA_MS) break;   // el resto del buffer es aun mas viejo
+    if (!primero) j += ",";
+    primero = false;
+    j += "{\"haceMin\":" + String(antiguedad / 60000UL) +
+         ",\"duracionS\":" + String(historial[idx].duracionMs / 1000UL) + "}";
+  }
+  j += "]";
+  return j;
+}
+
+void apiHistorial() {
+  if (!autorizado()) return;
+  server.send(200, "application/json", historialJson());
 }
 
 void apiModo() {
@@ -143,6 +207,7 @@ void paginaPrincipal() {
     "<h2>&#127793; Riego IoT</h2>"
     "<div class='card'><p>Suelo<br><span class='v' id='suelo'>--</span> (raw <span id='raw'>--</span>)</p></div>"
     "<div class='card'><p>Aire<br><span class='v'><span id='temp'>--</span> &middot; <span id='aire'>--</span></span></p></div>"
+    "<div class='card' id='cardLuz' style='display:none'><p>Luz<br><span class='v' id='luz'>--</span> lux</p></div>"
     "<div class='card'><p>Modo: <b id='modo'>--</b> &middot; Bomba: <b id='bomba'>--</b></p></div>"
     "<button id='btnModo'>Cambiar modo</button>"
     "<div id='manual'>"
@@ -157,6 +222,7 @@ void paginaPrincipal() {
         "document.getElementById('raw').textContent=d.rawSuelo;"
         "document.getElementById('temp').textContent=(d.tempC===null?'--':d.tempC.toFixed(1))+' \\u00b0C';"
         "document.getElementById('aire').textContent=(d.humAire===null?'--':Math.round(d.humAire))+' %';"
+        "if(d.luxLuz!==null){document.getElementById('cardLuz').style.display='block';document.getElementById('luz').textContent=Math.round(d.luxLuz);}"
         "document.getElementById('modo').textContent=d.modoAuto?'AUTOMATICO':'MANUAL';"
         "document.getElementById('bomba').textContent=d.bombaOn?'ENCENDIDA':'apagada';"
         "document.getElementById('btnModo').textContent='Cambiar a '+(d.modoAuto?'MANUAL':'AUTOMATICO');"
@@ -178,6 +244,11 @@ void setup() {
   setBomba(false);
   dht.begin();
 
+  Wire.begin(PIN_SDA, PIN_SCL);
+  luzDisponible = bh1750.begin(BH1750::CONTINUOUS_HIGH_RES_MODE);
+  Serial.println(luzDisponible ? "BH1750 detectado: luz disponible"
+                                : "BH1750 no detectado: se omite la lectura de luz");
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   Serial.print("Conectando a WiFi");
@@ -196,6 +267,7 @@ void setup() {
 
   server.on("/", HTTP_GET, paginaPrincipal);
   server.on("/api/estado", HTTP_GET,  apiEstado);
+  server.on("/api/historial", HTTP_GET, apiHistorial);
   server.on("/api/modo",   HTTP_POST, apiModo);
   server.on("/api/on",     HTTP_POST, apiOn);
   server.on("/api/off",    HTTP_POST, apiOff);
@@ -209,8 +281,9 @@ void loop() {
     ultimaLectura = millis();
     leerSensores();
     logicaRiego();
-    Serial.printf("T:%.1fC Aire:%.0f%% Suelo:%d%% (raw %d) Modo:%s Bomba:%s\n",
+    Serial.printf("T:%.1fC Aire:%.0f%% Suelo:%d%% (raw %d) Luz:%s Modo:%s Bomba:%s\n",
                   tempC, humAire, humSuelo, rawSuelo,
+                  (luzDisponible && !isnan(luxLuz)) ? String(luxLuz, 0).c_str() : "N/D",
                   modoAuto ? "AUTO" : "MANUAL", bombaOn ? "ON" : "OFF");
   }
 }

@@ -4,6 +4,7 @@ import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -12,8 +13,14 @@ data class EstadoRiego(
     val humAire: Double?,
     val humSuelo: Int,
     val rawSuelo: Int,
+    val luxLuz: Double?,
     val modoAuto: Boolean,
     val bombaOn: Boolean
+)
+
+data class EventoRiego(
+    val haceMin: Int,
+    val duracionS: Int
 )
 
 class ApiException(message: String) : Exception(message)
@@ -33,12 +40,13 @@ class RiegoApiClient(ip: String, usuario: String, clave: String) {
         .readTimeout(4, TimeUnit.SECONDS)
         .build()
 
-    fun obtenerEstado(): EstadoRiego = llamar("/api/estado", post = false)
-    fun cambiarModo(): EstadoRiego = llamar("/api/modo", post = true)
-    fun encender(): EstadoRiego = llamar("/api/on", post = true)
-    fun apagar(): EstadoRiego = llamar("/api/off", post = true)
+    fun obtenerEstado(): EstadoRiego = parsearEstado(llamar("/api/estado", post = false))
+    fun cambiarModo(): EstadoRiego = parsearEstado(llamar("/api/modo", post = true))
+    fun encender(): EstadoRiego = parsearEstado(llamar("/api/on", post = true))
+    fun apagar(): EstadoRiego = parsearEstado(llamar("/api/off", post = true))
+    fun obtenerHistorial(): List<EventoRiego> = parsearHistorial(llamar("/api/historial", post = false))
 
-    private fun llamar(path: String, post: Boolean): EstadoRiego {
+    private fun llamar(path: String, post: Boolean): String {
         val builder = Request.Builder()
             .url(baseUrl + path)
             .header("Authorization", credencial)
@@ -47,20 +55,28 @@ class RiegoApiClient(ip: String, usuario: String, clave: String) {
         client.newCall(builder.build()).execute().use { resp ->
             if (resp.code == 401) throw ApiException("credenciales")
             if (!resp.isSuccessful) throw ApiException("http_${resp.code}")
-            val cuerpo = resp.body?.string() ?: throw ApiException("respuesta_vacia")
-            return parsear(cuerpo)
+            return resp.body?.string() ?: throw ApiException("respuesta_vacia")
         }
     }
 
-    private fun parsear(cuerpo: String): EstadoRiego {
+    private fun parsearEstado(cuerpo: String): EstadoRiego {
         val j = JSONObject(cuerpo)
         return EstadoRiego(
             tempC = if (j.isNull("tempC")) null else j.getDouble("tempC"),
             humAire = if (j.isNull("humAire")) null else j.getDouble("humAire"),
             humSuelo = j.getInt("humSuelo"),
             rawSuelo = j.getInt("rawSuelo"),
+            luxLuz = if (j.isNull("luxLuz")) null else j.getDouble("luxLuz"),
             modoAuto = j.getBoolean("modoAuto"),
             bombaOn = j.getBoolean("bombaOn")
         )
+    }
+
+    private fun parsearHistorial(cuerpo: String): List<EventoRiego> {
+        val arr = JSONArray(cuerpo)
+        return (0 until arr.length()).map { i ->
+            val e = arr.getJSONObject(i)
+            EventoRiego(haceMin = e.getInt("haceMin"), duracionS = e.getInt("duracionS"))
+        }
     }
 }

@@ -1,162 +1,403 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/fondo"
-    android:fillViewport="true">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="match_parent"
+        android:background="@drawable/fondo_degradado" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🌱 Riego IoT"
-            android:textColor="@color/texto"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
+    <View
+        android:id="@+id/blobUno"
+        android:layout_width="240dp"
+        android:layout_height="240dp"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="-70dp"
+        android:layout_marginTop="-50dp"
+        android:alpha="0.55"
+        android:background="@drawable/mancha_blob" />
 
-        <!-- Tarjeta de conexion -->
+    <View
+        android:id="@+id/blobDos"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="-60dp"
+        android:layout_marginBottom="60dp"
+        android:alpha="0.45"
+        android:background="@drawable/mancha_blob" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:fillViewport="true">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@color/tarjeta"
-            android:padding="16dp"
-            android:layout_marginBottom="12dp"
-            android:elevation="2dp">
+            android:padding="20dp">
 
-            <EditText
-                android:id="@+id/inputIp"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/hint_ip"
-                android:inputType="text"
-                android:importantForAutofill="no" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp">
 
-            <EditText
-                android:id="@+id/inputUsuario"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_usuario"
-                android:inputType="text"
-                android:layout_marginTop="8dp"
-                android:importantForAutofill="no" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🌱 Riego IoT"
+                    android:textColor="@color/texto"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/inputClave"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_clave"
-                android:inputType="textPassword"
-                android:layout_marginTop="8dp"
-                android:importantForAutofill="no" />
-
-            <Button
-                android:id="@+id/btnConectar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_guardar"
-                android:backgroundTint="@color/primario"
-                android:textColor="#FFFFFF"
-                android:layout_marginTop="12dp" />
+                <TextView
+                    android:id="@+id/btnCambiarConexion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/btn_cambiar_conexion"
+                    android:textColor="@color/primario_oscuro"
+                    android:textSize="13sp"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvError"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/error"
-                android:layout_marginTop="8dp"
+                android:layout_marginBottom="12dp"
                 android:visibility="gone" />
-        </LinearLayout>
 
-        <!-- Tarjeta de estado -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@color/tarjeta"
-            android:padding="16dp"
-            android:layout_marginBottom="12dp"
-            android:elevation="2dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_suelo"
-                android:textColor="@color/texto_secundario" />
-
-            <TextView
-                android:id="@+id/tvSuelo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/valor_pendiente"
-                android:textColor="@color/texto"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_aire"
-                android:textColor="@color/texto_secundario"
-                android:layout_marginTop="12dp" />
-
-            <TextView
-                android:id="@+id/tvAire"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/valor_pendiente"
-                android:textColor="@color/texto"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvModoBomba"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/valor_pendiente"
-                android:textColor="@color/texto"
-                android:layout_marginTop="12dp" />
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btnCambiarModo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_cambiar_modo"
-            android:backgroundTint="@color/primario"
-            android:textColor="#FFFFFF" />
-
-        <LinearLayout
-            android:id="@+id/layoutManual"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <Button
-                android:id="@+id/btnEncender"
+            <!-- ============ PANEL: PERCEPCION (sensores en vivo) ============ -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_encender"
-                android:backgroundTint="@color/primario"
-                android:textColor="#FFFFFF"
-                android:layout_marginTop="8dp" />
+                android:layout_marginBottom="14dp"
+                app:cardBackgroundColor="@color/tarjeta"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="3dp"
+                app:strokeColor="@color/tarjeta_borde"
+                app:strokeWidth="1dp">
 
-            <Button
-                android:id="@+id/btnApagar"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/headerPercepcion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_capa_percepcion"
+                                android:textColor="@color/texto"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_capa_percepcion_subtitulo"
+                                android:textColor="@color/texto_secundario"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/chevronPercepcion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/chevron_abierto"
+                            android:textColor="@color/primario"
+                            android:textSize="18sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/contentPercepcion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:paddingTop="0dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/label_suelo"
+                            android:textColor="@color/texto_secundario" />
+
+                        <TextView
+                            android:id="@+id/tvSuelo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/valor_pendiente"
+                            android:textColor="@color/texto"
+                            android:textSize="28sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/label_aire"
+                            android:textColor="@color/texto_secundario"
+                            android:layout_marginTop="12dp" />
+
+                        <TextView
+                            android:id="@+id/tvAire"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/valor_pendiente"
+                            android:textColor="@color/texto"
+                            android:textSize="28sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutLuz"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_luz"
+                                android:textColor="@color/texto_secundario"
+                                android:layout_marginTop="12dp" />
+
+                            <TextView
+                                android:id="@+id/tvLuz"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/valor_pendiente"
+                                android:textColor="@color/texto"
+                                android:textSize="28sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ============ PANEL: PROCESAMIENTO (modo y control) ============ -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_apagar"
-                android:backgroundTint="@color/texto_secundario"
-                android:textColor="#FFFFFF"
-                android:layout_marginTop="8dp" />
-        </LinearLayout>
+                android:layout_marginBottom="14dp"
+                app:cardBackgroundColor="@color/tarjeta"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="3dp"
+                app:strokeColor="@color/tarjeta_borde"
+                app:strokeWidth="1dp">
 
-    </LinearLayout>
-</ScrollView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/headerProcesamiento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_capa_procesamiento"
+                                android:textColor="@color/texto"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_capa_procesamiento_subtitulo"
+                                android:textColor="@color/texto_secundario"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/chevronProcesamiento"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/chevron_cerrado"
+                            android:textColor="@color/primario"
+                            android:textSize="18sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/contentProcesamiento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:paddingTop="0dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/tvModoBomba"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/valor_pendiente"
+                            android:textColor="@color/texto"
+                            android:layout_marginBottom="12dp" />
+
+                        <Button
+                            android:id="@+id/btnCambiarModo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/btn_cambiar_modo"
+                            android:backgroundTint="@color/primario"
+                            android:textColor="#FFFFFF" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutManual"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <Button
+                                android:id="@+id/btnEncender"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/btn_encender"
+                                android:backgroundTint="@color/primario"
+                                android:textColor="#FFFFFF"
+                                android:layout_marginTop="8dp" />
+
+                            <Button
+                                android:id="@+id/btnApagar"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/btn_apagar"
+                                android:backgroundTint="@color/texto_secundario"
+                                android:textColor="#FFFFFF"
+                                android:layout_marginTop="8dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ============ PANEL: APLICACION (registros / historial) ============ -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                app:cardBackgroundColor="@color/tarjeta"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="3dp"
+                app:strokeColor="@color/tarjeta_borde"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/headerAplicacion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_capa_aplicacion"
+                                android:textColor="@color/texto"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_capa_aplicacion_subtitulo"
+                                android:textColor="@color/texto_secundario"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/chevronAplicacion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/chevron_cerrado"
+                            android:textColor="@color/primario"
+                            android:textSize="18sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/contentAplicacion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:paddingTop="0dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:id="@+id/layoutHistorial"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+
+                        <TextView
+                            android:id="@+id/tvHistorialVacio"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/label_historial_vacio"
+                            android:textColor="@color/texto_secundario"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>
