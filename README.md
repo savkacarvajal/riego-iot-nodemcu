@@ -1,10 +1,43 @@
-# Riego IoT con NodeMCU (ESP8266)
+<div align="center">
 
-Sistema de riego con NodeMCU: lee temperatura y humedad del aire (DHT22) y la humedad del suelo, y decide cuándo regar. Se controla en modo **automático** o **manual** desde una página web en el celular.
+# 🌱 Riego IoT con NodeMCU
 
-> Estado: la salida de la bomba usa por defecto el **LED integrado** como "bomba virtual". La bomba real necesita una pieza extra (ver [Bomba real](#bomba-real)).
+**Riego automático (o manual) con sensores reales y control desde el celular**
 
-## Materiales
+![ESP8266](https://img.shields.io/badge/ESP8266-NodeMCU%201.0-00979D?logo=espressif&logoColor=white)
+![Arduino](https://img.shields.io/badge/Arduino-IDE-00979D?logo=arduino&logoColor=white)
+![DHT22](https://img.shields.io/badge/Sensor-DHT22-38bdf8)
+![IoT](https://img.shields.io/badge/IoT-WiFi%20%2B%20WebServer-8b0d16)
+![Estado](https://img.shields.io/badge/estado-funcional-brightgreen)
+
+Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo regar, y se controla en modo **automático** o **manual** desde una página web en el celular — con corte de seguridad para que la bomba nunca quede regando sola.
+
+</div>
+
+---
+
+## 📋 Índice
+
+- [✨ Qué hace](#-qué-hace)
+- [🧰 Materiales](#-materiales)
+- [🔌 Conexión](#-conexión)
+- [🚰 Bomba real](#-bomba-real)
+- [⚙️ Instalación](#️-instalación)
+- [🎚️ Calibración del sensor de suelo](#️-calibración-del-sensor-de-suelo)
+- [🧠 Cómo funciona](#-cómo-funciona)
+- [🗂️ Estructura](#️-estructura)
+
+## ✨ Qué hace
+
+- 🌡️ **Monitoreo en vivo** — temperatura y humedad del aire (DHT22) y humedad del suelo, refrescado cada 2 s.
+- 🤖 **Modo automático** — riega cuando el suelo baja de un umbral y se apaga solo al subir de otro (histéresis, sin encendidos/apagados en cadena).
+- 📱 **Modo manual** — botones ENCENDER / APAGAR desde una página web protegida con usuario y clave.
+- 🛑 **Corte de seguridad** — la bomba nunca riega más de 15 s seguidos ni corre en seco si el sensor falla.
+- 📶 **Resiliente sin WiFi** — si no hay red, el riego automático sigue funcionando; solo se pierde la página.
+
+> Estado: la salida de la bomba usa por defecto el **LED integrado** como "bomba virtual". La bomba real necesita una pieza extra (ver [Bomba real](#-bomba-real)).
+
+## 🧰 Materiales
 
 | Pieza | Uso |
 |---|---|
@@ -15,7 +48,7 @@ Sistema de riego con NodeMCU: lee temperatura y humedad del aire (DHT22) y la hu
 | Protoboard y cables | Conexiones |
 | *(para la bomba real)* transistor NPN + resistencia + diodo, relé o driver | Interruptor de la bomba |
 
-## Conexión
+## 🔌 Conexión
 
 | Componente | Pin del componente | Pin del NodeMCU |
 |---|---|---|
@@ -31,7 +64,7 @@ Todos los GND van al mismo riel de GND (masa común).
 
 > El DHT22 va en **D5** y no en D4, porque D4 (GPIO2) comparte pin con el LED azul de la placa.
 
-## Bomba real
+## 🚰 Bomba real
 
 La bomba consume unos 100–200 mA y un pin del NodeMCU entrega ~12 mA. **No la conectes directo a un pin**: puede dañar la placa. Necesitas un interruptor intermedio.
 
@@ -56,7 +89,7 @@ Con un módulo relé o un driver (L9110/L298N) el cambio de código es el mismo;
 
 Para probar la bomba suelta, sin código: rojo a VIN y negro a GND, **sumergida** (en seco se quema).
 
-## Instalación
+## ⚙️ Instalación
 
 1. Arduino IDE → **Archivo → Preferencias** → en "Gestor de URLs adicionales" agrega:
    `http://arduino.esp8266.com/stable/package_esp8266com_index.json`
@@ -68,13 +101,13 @@ Para probar la bomba suelta, sin código: rojo a VIN y negro a GND, **sumergida*
 
 Si la red de la universidad bloquea la conexión, usa el hotspot del celular.
 
-## Calibración del sensor de suelo
+## 🎚️ Calibración del sensor de suelo
 
 1. Con el sensor **al aire**, anota el valor `raw` del Monitor Serial → `RAW_SECO`.
 2. Con el sensor **en un vaso con agua**, anota el `raw` → `RAW_HUMEDO`.
 3. Ajusta `UMBRAL_RIEGO` (riega bajo ese %) y `UMBRAL_APAGA` (deja de regar sobre ese %).
 
-## Cómo funciona
+## 🧠 Cómo funciona
 
 - **Automático:** si el suelo baja del umbral, enciende la bomba; la apaga al superar `UMBRAL_APAGA` (histéresis, para que no prenda y apague sin parar).
 - **Manual:** botones ENCENDER / APAGAR en la página.
@@ -82,7 +115,7 @@ Si la red de la universidad bloquea la conexión, usa el hotspot del celular.
 - **Sin WiFi:** el riego automático sigue funcionando; solo se pierde la página.
 - **Página web:** pide usuario y clave (definidos en `config.h`). Va sobre HTTP sin cifrar: úsala solo en una red local de confianza y no la expongas a internet.
 
-## Estructura
+## 🗂️ Estructura
 
 ```
 riego-iot-nodemcu/
