@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  El NodeMCU no tiene HTTPS: solo sirve HTTP plano en la red local.
+  Esto habilita trafico sin cifrar para toda la app. Es intencional y
+  seguro SOLO porque esta app esta pensada para hablar con un
+  dispositivo en tu propia red WiFi de confianza, nunca por internet.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

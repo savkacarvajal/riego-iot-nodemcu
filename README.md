@@ -10,7 +10,7 @@
 ![IoT](https://img.shields.io/badge/IoT-WiFi%20%2B%20WebServer-8b0d16)
 ![Estado](https://img.shields.io/badge/estado-funcional-brightgreen)
 
-Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo regar, y se controla en modo **automático** o **manual** desde una página web en el celular — con corte de seguridad para que la bomba nunca quede regando sola.
+Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo regar, y se controla en modo **automático** o **manual** desde una página web o una app Android — ambas dentro de la misma red WiFi, con corte de seguridad para que la bomba nunca quede regando sola.
 
 </div>
 
@@ -25,13 +25,15 @@ Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo r
 - [⚙️ Instalación](#️-instalación)
 - [🎚️ Calibración del sensor de suelo](#️-calibración-del-sensor-de-suelo)
 - [🧠 Cómo funciona](#-cómo-funciona)
+- [📡 API JSON](#-api-json)
+- [📱 App Android](#-app-android)
 - [🗂️ Estructura](#️-estructura)
 
 ## ✨ Qué hace
 
 - 🌡️ **Monitoreo en vivo** — temperatura y humedad del aire (DHT22) y humedad del suelo, refrescado cada 2 s.
 - 🤖 **Modo automático** — riega cuando el suelo baja de un umbral y se apaga solo al subir de otro (histéresis, sin encendidos/apagados en cadena).
-- 📱 **Modo manual** — botones ENCENDER / APAGAR desde una página web protegida con usuario y clave.
+- 📱 **Modo manual** — botones ENCENDER / APAGAR desde la página web o la [app Android](#-app-android), ambas protegidas con usuario y clave.
 - 🛑 **Corte de seguridad** — la bomba nunca riega más de 15 s seguidos ni corre en seco si el sensor falla.
 - 📶 **Resiliente sin WiFi** — si no hay red, el riego automático sigue funcionando; solo se pierde la página.
 
@@ -112,8 +114,28 @@ Si la red de la universidad bloquea la conexión, usa el hotspot del celular.
 - **Automático:** si el suelo baja del umbral, enciende la bomba; la apaga al superar `UMBRAL_APAGA` (histéresis, para que no prenda y apague sin parar).
 - **Manual:** botones ENCENDER / APAGAR en la página.
 - **Seguridad:** la bomba se corta sola tras 15 s seguidos y espera 60 s antes de volver a regar. Evita que corra en seco o inunde la maceta si el sensor falla.
-- **Sin WiFi:** el riego automático sigue funcionando; solo se pierde la página.
-- **Página web:** pide usuario y clave (definidos en `config.h`). Va sobre HTTP sin cifrar: úsala solo en una red local de confianza y no la expongas a internet.
+- **Sin WiFi:** el riego automático sigue funcionando; solo se pierde el control remoto.
+- **Página web y app:** piden usuario y clave (definidos en `config.h`, HTTP Basic Auth) y solo funcionan dentro de la red WiFi del NodeMCU — no hay nube ni servidor externo. Va sobre HTTP sin cifrar: úsalas solo en una red local de confianza y no expongas el NodeMCU a internet.
+- **Página web:** se sirve directamente desde el NodeMCU (`GET /`) y se actualiza sola cada 2 s llamando a la API JSON por `fetch()`, sin recargar la página completa.
+
+## 📡 API JSON
+
+El NodeMCU expone estos endpoints (todos protegidos con el mismo usuario/clave que la página web), consumidos tanto por la página como por la app Android:
+
+| Método | Ruta | Qué hace | Respuesta |
+|---|---|---|---|
+| GET | `/api/estado` | Estado actual | `{"tempC":21.4,"humAire":55,"humSuelo":38,"rawSuelo":612,"modoAuto":true,"bombaOn":false}` |
+| POST | `/api/modo` | Alterna AUTOMÁTICO/MANUAL | mismo JSON de estado, ya actualizado |
+| POST | `/api/on` | Enciende la bomba (solo si está en MANUAL) | mismo JSON de estado |
+| POST | `/api/off` | Apaga la bomba (solo si está en MANUAL) | mismo JSON de estado |
+
+`tempC`/`humAire` llegan como `null` si el DHT22 aún no entrega una lectura válida.
+
+## 📱 App Android
+
+Cliente nativo en Kotlin (carpeta [`app-android/`](app-android/)) que muestra el mismo estado en vivo y los mismos controles que la página web, pero como app instalada en el celular. Habla directo con la IP local del NodeMCU — misma red WiFi, sin nube.
+
+Ver [`app-android/README.md`](app-android/README.md) para cómo abrirla en Android Studio, compilarla e instalarla.
 
 ## 🗂️ Estructura
 
@@ -122,6 +144,7 @@ riego-iot-nodemcu/
 ├── firmware/riego_nodemcu/
 │   ├── riego_nodemcu.ino
 │   └── config.h.example      # copiar como config.h (no se sube a GitHub)
+├── app-android/               # app Android (Kotlin) — ver su propio README
 ├── README.md
 └── .gitignore
 ```

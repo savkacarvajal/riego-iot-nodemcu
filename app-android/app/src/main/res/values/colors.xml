@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primario">#2B6CB0</color>
+    <color name="primario_oscuro">#1A4E8A</color>
+    <color name="fondo">#F7FAFC</color>
+    <color name="tarjeta">#FFFFFF</color>
+    <color name="texto">#1A202C</color>
+    <color name="texto_secundario">#4A5568</color>
+    <color name="error">#C53030</color>
+</resources>

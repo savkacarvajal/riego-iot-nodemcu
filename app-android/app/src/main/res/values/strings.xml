@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Riego IoT</string>
+
+    <string name="hint_ip">IP del NodeMCU (ej. 192.168.1.50)</string>
+    <string name="hint_usuario">Usuario</string>
+    <string name="hint_clave">Clave</string>
+    <string name="btn_conectar">Conectar</string>
+    <string name="btn_guardar">Guardar y probar conexión</string>
+
+    <string name="label_suelo">Suelo</string>
+    <string name="label_aire">Aire</string>
+    <string name="label_modo">Modo</string>
+    <string name="label_bomba">Bomba</string>
+    <string name="valor_pendiente">--</string>
+
+    <string name="btn_cambiar_modo">Cambiar modo</string>
+    <string name="btn_encender">ENCENDER</string>
+    <string name="btn_apagar">APAGAR</string>
+
+    <string name="modo_auto">AUTOMÁTICO</string>
+    <string name="modo_manual">MANUAL</string>
+    <string name="bomba_on">ENCENDIDA</string>
+    <string name="bomba_off">apagada</string>
+
+    <string name="error_conexion">No se pudo conectar. Revisa la IP y que el celular esté en la misma WiFi que el NodeMCU.</string>
+    <string name="error_credenciales">Usuario o clave incorrectos.</string>
+</resources>
