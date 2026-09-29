@@ -12,6 +12,11 @@
 
 Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo regar, y se controla en modo **automático** o **manual** desde una página web o una app Android — ambas dentro de la misma red WiFi, con corte de seguridad para que la bomba nunca quede regando sola.
 
+<p align="center">
+  <img src="app-android/docs/login.png" alt="Login de la app Android" width="260">
+  <img src="app-android/docs/dashboard.png" alt="Dashboard de la app Android" width="260">
+</p>
+
 </div>
 
 ---
