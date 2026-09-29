@@ -1,0 +1,14 @@
+{
+  "name": "riego-iot-bridge",
+  "version": "1.0.0",
+  "description": "Puente entre el NodeMCU (HTTP local) y Firebase Realtime Database, para que la web y la app Android compartan una sola base de datos.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.6.0"
+  }
+}

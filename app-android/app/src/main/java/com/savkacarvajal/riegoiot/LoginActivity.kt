@@ -1,6 +1,5 @@
 package com.savkacarvajal.riegoiot
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.RenderEffect
 import android.graphics.Shader
@@ -9,15 +8,15 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.savkacarvajal.riegoiot.databinding.ActivityLoginBinding
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.tasks.await
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
-    private val prefs by lazy { getSharedPreferences("riego_iot", Context.MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,27 +28,21 @@ class LoginActivity : AppCompatActivity() {
             binding.blobDos.setRenderEffect(blur)
         }
 
-        binding.inputIp.setText(prefs.getString("ip", ""))
-        binding.inputUsuario.setText(prefs.getString("usuario", "admin"))
-        val claveCifrada = prefs.getString("clave_cifrada", null)
-        val ivClave = prefs.getString("clave_iv", null)
-        if (claveCifrada != null && ivClave != null) {
-            binding.inputClave.setText(SeguridadLocal.descifrar(claveCifrada, ivClave) ?: "")
+        // Firebase Auth guarda su propia sesion; si ya hay una activa, no hace
+        // falta volver a pedir correo y clave.
+        if (Firebase.auth.currentUser != null) {
+            irADashboard()
+            return
         }
 
-        binding.btnConectar.setOnClickListener { intentarConectar() }
-
-        // Si ya hay una conexion guardada de una sesion anterior, se prueba
-        // sola al abrir la app; si falla, el usuario ve el formulario y el error.
-        if (binding.inputIp.text.toString().isNotBlank()) intentarConectar()
+        binding.btnConectar.setOnClickListener { intentarIngresar() }
     }
 
-    private fun intentarConectar() {
-        val ip = binding.inputIp.text.toString().trim()
-        val usuario = binding.inputUsuario.text.toString().trim()
+    private fun intentarIngresar() {
+        val correo = binding.inputUsuario.text.toString().trim()
         val clave = binding.inputClave.text.toString()
-        if (ip.isEmpty()) {
-            mostrarError(getString(R.string.error_conexion))
+        if (correo.isEmpty() || clave.isEmpty()) {
+            mostrarError(getString(R.string.error_credenciales))
             return
         }
 
@@ -57,30 +50,21 @@ class LoginActivity : AppCompatActivity() {
         binding.btnConectar.isEnabled = false
         binding.btnConectar.text = getString(R.string.btn_conectando)
 
-        val cliente = RiegoApiClient(ip, usuario, clave)
         lifecycleScope.launch {
             try {
-                withContext(Dispatchers.IO) { cliente.obtenerEstado() }
-                val (claveCifrada, ivClave) = SeguridadLocal.cifrar(clave)
-                prefs.edit()
-                    .putString("ip", ip)
-                    .putString("usuario", usuario)
-                    .putString("clave_cifrada", claveCifrada)
-                    .putString("clave_iv", ivClave)
-                    .apply()
-                startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                finish()
-            } catch (e: ApiException) {
-                val mensaje = if (e.message == "credenciales")
-                    getString(R.string.error_credenciales) else getString(R.string.error_conexion)
-                mostrarError(mensaje)
+                Firebase.auth.signInWithEmailAndPassword(correo, clave).await()
+                irADashboard()
             } catch (e: Exception) {
-                mostrarError(getString(R.string.error_conexion))
-            } finally {
+                mostrarError(getString(R.string.error_credenciales))
                 binding.btnConectar.isEnabled = true
                 binding.btnConectar.text = getString(R.string.btn_conectar)
             }
         }
+    }
+
+    private fun irADashboard() {
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 
     private fun mostrarError(mensaje: String) {

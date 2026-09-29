@@ -1,0 +1,17 @@
+// Copia este archivo como "firebase-config.js" y pega los valores de tu proyecto
+// (Firebase Console -> Configuración del proyecto -> Tus apps -> Config).
+// firebase-config.js esta en .gitignore: NO se sube a GitHub.
+
+export const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "tu-proyecto.firebaseapp.com",
+  databaseURL: "https://tu-proyecto-default-rtdb.firebaseio.com",
+  projectId: "tu-proyecto",
+  storageBucket: "tu-proyecto.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxxxxxx",
+};
+
+// Firebase Console -> Configuración del proyecto -> Cloud Messaging -> Certificados
+// push web -> "Generate key pair".
+export const vapidKey = "TU_VAPID_KEY";

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  />
+  <meta name="theme-color" content="#8b5cf6" />
+  <meta name="description" content="Panel de riego automatizado con NodeMCU + Firebase" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <title>Riego IoT — Procesamiento</title>
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body>
+  <div class="blob blob-uno" aria-hidden="true"></div>
+  <div class="blob blob-dos" aria-hidden="true"></div>
+
+  <div class="contenedor">
+    <header class="marca">
+      <span class="brote" aria-hidden="true">🌱</span>
+      <h1>Riego IoT</h1>
+      <div class="expandir"></div>
+      <span class="estado-conexion" id="estado-conexion" role="status" aria-live="polite">
+        <span class="punto-vivo" aria-hidden="true"></span>
+        <span id="texto-conexion">Conectando…</span>
+      </span>
+      <button class="secundario" id="btn-salir">Salir</button>
+    </header>
+
+    <nav class="nav-principal" aria-label="Secciones">
+      <a href="index.html">Percepción</a>
+      <a href="procesamiento.html" class="activa" aria-current="page">Procesamiento</a>
+      <a href="aplicacion.html">Aplicación</a>
+    </nav>
+
+    <section class="tarjeta" aria-labelledby="titulo-procesamiento">
+      <h2 id="titulo-procesamiento">Procesamiento</h2>
+      <div class="fila">
+        <div class="selector-modo" id="selector-modo" role="status" aria-label="Modo de riego">
+          <div class="pastilla-fondo" aria-hidden="true"></div>
+          <span class="opcion" id="opcion-auto">Automático</span>
+          <span class="opcion" id="opcion-manual">Manual</span>
+        </div>
+        <button class="secundario" id="btn-modo">Cambiar modo</button>
+      </div>
+      <div class="fila fila-espaciada">
+        <span class="fila-bomba-etiqueta">
+          Bomba
+          <span class="pastilla" id="v-bomba" role="status"><span class="punto" aria-hidden="true"></span>—</span>
+        </span>
+        <div>
+          <button class="primario" id="btn-on">Encender</button>
+          <button class="peligro" id="btn-off">Apagar</button>
+        </div>
+      </div>
+
+      <h2 class="subtitulo">Umbrales</h2>
+      <div class="barra-umbrales" id="barra-umbrales" role="img" aria-label="Zonas de riego según humedad del suelo">
+        <div class="marcador" id="marcador-suelo" data-valor=""></div>
+      </div>
+      <div class="fila">
+        <div class="campo">
+          <label for="in-umbral-riego">Regar bajo (%)</label>
+          <input id="in-umbral-riego" type="number" min="0" max="100" />
+        </div>
+        <div class="campo">
+          <label for="in-umbral-apaga">Parar sobre (%)</label>
+          <input id="in-umbral-apaga" type="number" min="0" max="100" />
+        </div>
+        <button class="primario btn-alinear-abajo" id="btn-guardar-umbrales">Guardar</button>
+      </div>
+      <p class="mensaje-error" id="error-umbrales" aria-live="polite"></p>
+    </section>
+
+    <footer class="pie">Datos vía Firebase Realtime Database, sincronizados por el bridge local.</footer>
+  </div>
+
+  <script type="module" src="js/procesamiento.js"></script>
+</body>
+</html>

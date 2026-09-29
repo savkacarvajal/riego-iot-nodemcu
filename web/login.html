@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  />
+  <meta name="theme-color" content="#8b5cf6" />
+  <meta name="description" content="Panel de riego automatizado con NodeMCU + Firebase" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <title>Riego IoT — Ingresar</title>
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body>
+  <div class="blob blob-uno" aria-hidden="true"></div>
+  <div class="blob blob-dos" aria-hidden="true"></div>
+
+  <div class="contenedor">
+    <header class="marca">
+      <span class="brote" aria-hidden="true">🌱</span>
+      <h1>Riego IoT</h1>
+    </header>
+
+    <div class="tarjeta login-tarjeta">
+      <h2>Ingresar</h2>
+      <form id="form-login">
+        <div class="campo">
+          <label for="email">Correo</label>
+          <input id="email" type="email" autocomplete="email" required />
+        </div>
+        <div class="campo">
+          <label for="clave">Clave</label>
+          <input id="clave" type="password" autocomplete="current-password" required />
+        </div>
+        <p class="mensaje-error" id="error" aria-live="polite"></p>
+        <button type="submit" class="primario" id="btn-entrar">Entrar</button>
+      </form>
+    </div>
+
+    <footer class="pie">Proyecto de riego automatizado con NodeMCU + Firebase</footer>
+  </div>
+
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

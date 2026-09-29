@@ -2,14 +2,12 @@
 <resources>
     <string name="app_name">Riego IoT</string>
 
-    <string name="hint_ip">IP del NodeMCU (ej. 192.168.1.50)</string>
-    <string name="hint_usuario">Usuario</string>
+    <string name="hint_usuario">Correo</string>
     <string name="hint_clave">Clave</string>
-    <string name="btn_conectar">Conectar</string>
-    <string name="btn_conectando">Conectando…</string>
-    <string name="btn_guardar">Guardar y probar conexión</string>
-    <string name="label_login_subtitulo">Conéctate a tu NodeMCU</string>
-    <string name="btn_cambiar_conexion">🔌 Cambiar conexión</string>
+    <string name="btn_conectar">Ingresar</string>
+    <string name="btn_conectando">Ingresando…</string>
+    <string name="label_login_subtitulo">Inicia sesión para ver tu riego</string>
+    <string name="btn_cambiar_conexion">🔌 Cerrar sesión</string>
 
     <string name="label_suelo">Suelo</string>
     <string name="label_aire">Aire</string>
@@ -28,8 +26,8 @@
     <string name="bomba_on">ENCENDIDA</string>
     <string name="bomba_off">apagada</string>
 
-    <string name="error_conexion">No se pudo conectar. Revisa la IP y que el celular esté en la misma WiFi que el NodeMCU.</string>
-    <string name="error_credenciales">Usuario o clave incorrectos.</string>
+    <string name="error_conexion">No se pudo conectar. Revisa tu conexión a internet.</string>
+    <string name="error_credenciales">Correo o clave incorrectos.</string>
 
     <string name="label_historial">Historial de riego</string>
     <string name="label_historial_subtitulo">Últimas 24 horas</string>
@@ -56,4 +54,11 @@
     <string name="btn_guardar_umbrales">Guardar umbrales</string>
     <string name="umbrales_guardados">✓ Umbrales guardados</string>
     <string name="error_umbrales">El umbral de apagado debe ser mayor al de riego, ambos entre 0 y 100.</string>
+
+    <string name="btn_notificaciones">🔔 Activar notificaciones</string>
+    <string name="notificaciones_activadas">✓ Notificaciones activadas</string>
+    <string name="notificaciones_denegadas">No se activaron las notificaciones (permiso denegado).</string>
+    <string name="notificaciones_error">No se pudo activar las notificaciones.</string>
+    <string name="canal_notificaciones_nombre">Alertas de riego</string>
+    <string name="canal_notificaciones_descripcion">Avisos cuando la bomba se enciende o se apaga</string>
 </resources>

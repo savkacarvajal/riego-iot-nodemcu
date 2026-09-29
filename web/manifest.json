@@ -1,0 +1,14 @@
+{
+  "name": "Riego IoT",
+  "short_name": "Riego IoT",
+  "description": "Panel de riego automatizado con NodeMCU + Firebase",
+  "start_url": "login.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f5f3ff",
+  "theme_color": "#8b5cf6",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -438,6 +438,23 @@
                         android:paddingTop="0dp"
                         android:visibility="gone">
 
+                        <Button
+                            android:id="@+id/btnNotificaciones"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/btn_notificaciones"
+                            android:backgroundTint="@color/tarjeta_borde"
+                            android:textColor="@color/primario_oscuro"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:id="@+id/tvNotificacionesEstado"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="13sp"
+                            android:layout_marginBottom="12dp"
+                            android:visibility="gone" />
+
                         <LinearLayout
                             android:id="@+id/layoutHistorial"
                             android:layout_width="match_parent"

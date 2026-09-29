@@ -1,0 +1,13 @@
+// Copia este archivo como "firebase-config-sw.js" (mismos valores que firebase-config.js).
+// Separado porque el service worker no es un módulo ES y no puede usar "import".
+// firebase-config-sw.js esta en .gitignore: NO se sube a GitHub.
+
+self.FIREBASE_CONFIG = {
+  apiKey: "TU_API_KEY",
+  authDomain: "tu-proyecto.firebaseapp.com",
+  databaseURL: "https://tu-proyecto-default-rtdb.firebaseio.com",
+  projectId: "tu-proyecto",
+  storageBucket: "tu-proyecto.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxxxxxx",
+};

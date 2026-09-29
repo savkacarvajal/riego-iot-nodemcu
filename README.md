@@ -7,10 +7,11 @@
 ![ESP8266](https://img.shields.io/badge/ESP8266-NodeMCU%201.0-00979D?logo=espressif&logoColor=white)
 ![Arduino](https://img.shields.io/badge/Arduino-IDE-00979D?logo=arduino&logoColor=white)
 ![DHT22](https://img.shields.io/badge/Sensor-DHT22-38bdf8)
-![IoT](https://img.shields.io/badge/IoT-WiFi%20%2B%20WebServer-8b0d16)
+![Firebase](https://img.shields.io/badge/Firebase-Realtime%20DB%20%2B%20Auth-FFCA28?logo=firebase&logoColor=black)
+![Node.js](https://img.shields.io/badge/Bridge-Node.js-339933?logo=node.js&logoColor=white)
 ![Estado](https://img.shields.io/badge/estado-funcional-brightgreen)
 
-Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo regar, y se controla en modo **automático** o **manual** desde una página web o una app Android — ambas dentro de la misma red WiFi, con corte de seguridad para que la bomba nunca quede regando sola.
+Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo regar, y se controla en modo **automático** o **manual** desde una página web o una app Android — **desde cualquier lugar con internet**, no solo la WiFi del NodeMCU, con corte de seguridad para que la bomba nunca quede regando sola.
 
 <p align="center">
   <img src="app-android/docs/login.png" alt="Login de la app Android" width="260">
@@ -27,20 +28,27 @@ Lee temperatura y humedad del aire (DHT22) y humedad del suelo, decide cuándo r
 - [🧰 Materiales](#-materiales)
 - [🔌 Conexión](#-conexión)
 - [🚰 Bomba real](#-bomba-real)
-- [⚙️ Instalación](#️-instalación)
+- [⚙️ Instalación del firmware](#️-instalación-del-firmware)
 - [🎚️ Calibración del sensor de suelo](#️-calibración-del-sensor-de-suelo)
 - [🧠 Cómo funciona](#-cómo-funciona)
-- [📡 API JSON](#-api-json)
+- [☁️ Arquitectura en la nube](#️-arquitectura-en-la-nube)
+- [🔥 Configurar Firebase](#-configurar-firebase)
+- [📡 API JSON del NodeMCU](#-api-json-del-nodemcu)
+- [🖥️ Panel web](#️-panel-web)
 - [📱 App Android](#-app-android)
+- [🔒 Seguridad](#-seguridad)
 - [🗂️ Estructura](#️-estructura)
 
 ## ✨ Qué hace
 
 - 🌡️ **Monitoreo en vivo** — temperatura y humedad del aire (DHT22) y humedad del suelo, refrescado cada 2 s.
 - 🤖 **Modo automático** — riega cuando el suelo baja de un umbral y se apaga solo al subir de otro (histéresis, sin encendidos/apagados en cadena).
-- 📱 **Modo manual** — botones ENCENDER / APAGAR desde la página web o la [app Android](#-app-android), ambas protegidas con usuario y clave.
+- 📱 **Modo manual** — botones ENCENDER / APAGAR desde el [panel web](#️-panel-web) o la [app Android](#-app-android), ambos protegidos con login (Firebase Authentication).
+- ☁️ **Base de datos compartida** — web y app leen/escriben la misma [Firebase Realtime Database](#️-arquitectura-en-la-nube): historial persistente, control desde cualquier lugar.
+- 🔔 **Notificaciones push** — la web y la app avisan cuando la bomba se enciende o se apaga, aunque estén cerradas.
+- 📈 **Tendencia de humedad** — el panel web grafica la humedad del suelo en el tiempo, con tabla accesible como alternativa.
 - 🛑 **Corte de seguridad** — la bomba nunca riega más de 15 s seguidos ni corre en seco si el sensor falla.
-- 📶 **Resiliente sin WiFi** — si no hay red, el riego automático sigue funcionando; solo se pierde la página.
+- 📶 **Resiliente sin WiFi** — si no hay red, el riego automático sigue funcionando; solo se pierde el control remoto.
 
 > Estado: la salida de la bomba usa por defecto el **LED integrado** como "bomba virtual". La bomba real necesita una pieza extra (ver [Bomba real](#-bomba-real)).
 
@@ -102,7 +110,7 @@ Con un módulo relé o un driver (L9110/L298N) el cambio de código es el mismo;
 
 Para probar la bomba suelta, sin código: rojo a VIN y negro a GND, **sumergida** (en seco se quema).
 
-## ⚙️ Instalación
+## ⚙️ Instalación del firmware
 
 1. Arduino IDE → **Archivo → Preferencias** → en "Gestor de URLs adicionales" agrega:
    `http://arduino.esp8266.com/stable/package_esp8266com_index.json`
@@ -126,12 +134,52 @@ Si la red de la universidad bloquea la conexión, usa el hotspot del celular.
 - **Manual:** botones ENCENDER / APAGAR en la página.
 - **Seguridad:** la bomba se corta sola tras 15 s seguidos y espera 60 s antes de volver a regar. Evita que corra en seco o inunde la maceta si el sensor falla.
 - **Sin WiFi:** el riego automático sigue funcionando; solo se pierde el control remoto.
-- **Página web y app:** piden usuario y clave (definidos en `config.h`, HTTP Basic Auth) y solo funcionan dentro de la red WiFi del NodeMCU — no hay nube ni servidor externo. Va sobre HTTP sin cifrar: úsalas solo en una red local de confianza y no expongas el NodeMCU a internet. Tras 5 intentos de login fallidos, el NodeMCU bloquea todo acceso por 1 minuto (mitiga fuerza bruta). Detalle completo, incluyendo por qué se descartó TLS, en [Seguridad de la app](app-android/README.md#-seguridad).
-- **Página web:** se sirve directamente desde el NodeMCU (`GET /`) y se actualiza sola cada 2 s llamando a la API JSON por `fetch()`, sin recargar la página completa.
+- **NodeMCU:** sigue sirviendo su API local igual que siempre (usuario/clave de `config.h`, HTTP Basic Auth), pero ya nadie le habla directo salvo el [bridge](#️-arquitectura-en-la-nube) — ni la página web ni la app apuntan a su IP. Tras 5 intentos de login fallidos, el NodeMCU bloquea todo acceso por 1 minuto (mitiga fuerza bruta).
+- **Página web y app:** piden correo y clave de **Firebase Authentication** (no las del NodeMCU) y leen/escriben directo en Firebase — funcionan desde cualquier red con internet. El [bridge](#️-arquitectura-en-la-nube) es el que de verdad conversa con el NodeMCU y mantiene todo sincronizado.
 
-## 📡 API JSON
+## ☁️ Arquitectura en la nube
 
-El NodeMCU expone estos endpoints (todos protegidos con el mismo usuario/clave que la página web), consumidos tanto por la página como por la app Android:
+El NodeMCU no tiene HTTPS (se evaluó agregar TLS/BearSSL y se descartó: en un ESP8266 con
+~30 KB de RAM libre, una conexión TLS puede necesitar ~28 KB solo de buffers — riesgo real de
+colgar el dispositivo). Por eso se agregó una pieza intermedia en vez de forzarlo:
+
+```
+NodeMCU  --HTTP local-->  bridge (Node.js)  --HTTPS-->  Firebase Realtime Database
+                                                              ↑           ↑
+                                                    Panel web (Hosting)   App Android
+```
+
+- **[`firmware/`](firmware/riego_nodemcu)** — sin cambios: sigue siendo la única fuente de
+  verdad de los sensores y quien controla la bomba (la seguridad del riego no se delega a la nube).
+- **[`bridge/`](bridge)** — corre en cualquier equipo de la misma red que el NodeMCU (el
+  laptop durante una demo, o un Raspberry Pi si se deja permanente). Cada 2 s copia
+  `/api/estado` y `/api/historial` del NodeMCU hacia Firebase, y reenvía al NodeMCU los
+  comandos que la web/app dejan en Firebase (cambiar modo, encender/apagar, nuevos umbrales).
+- **Firebase Realtime Database + Authentication** — la base compartida. El historial ahora
+  persiste (antes vivía en RAM del ESP8266 y se perdía al reiniciar).
+- **[`web/`](web)** y **[`app-android/`](app-android)** — leen/escriben directo en Firebase,
+  con las mismas credenciales de Authentication; no necesitan estar en la WiFi del NodeMCU.
+
+## 🔥 Configurar Firebase
+
+Una sola vez, antes de usar el bridge, la web o la app:
+
+1. Crea un proyecto en la [consola de Firebase](https://console.firebase.google.com/).
+2. Habilita **Realtime Database** (elige la región y empieza en modo bloqueado).
+3. Habilita **Authentication → Email/contraseña** y crea el usuario (correo/clave) que vas a
+   usar para entrar a la web y a la app.
+4. Genera las credenciales que necesita cada pieza (detalle en el README de cada carpeta):
+   - `bridge/serviceAccountKey.json` (cuenta de servicio, para el bridge)
+   - `web/js/firebase-config.js` y `web/js/firebase-config-sw.js` (config del SDK web)
+   - `app-android/app/google-services.json` (config del SDK Android)
+5. Para las notificaciones push: Configuración del proyecto → Cloud Messaging → Certificados
+   push web → "Generate key pair" (la clave VAPID va en `web/js/firebase-config.js`). Android
+   no necesita este paso, ya le llega vía `google-services.json`.
+
+## 📡 API JSON del NodeMCU
+
+El NodeMCU sigue exponiendo estos endpoints (protegidos con usuario/clave de `config.h`), pero
+ahora el único cliente es el [bridge](#️-arquitectura-en-la-nube):
 
 | Método | Ruta | Qué hace | Respuesta |
 |---|---|---|---|
@@ -143,13 +191,27 @@ El NodeMCU expone estos endpoints (todos protegidos con el mismo usuario/clave q
 | POST | `/api/on` | Enciende la bomba (solo si está en MANUAL) | mismo JSON de estado |
 | POST | `/api/off` | Apaga la bomba (solo si está en MANUAL) | mismo JSON de estado |
 
-`tempC`/`humAire` llegan como `null` si el DHT22 aún no entrega una lectura válida. `luxLuz` llega como `null` si no se detectó un BH1750 al arrancar. El historial y los umbrales cambiados por API viven en RAM (sin RTC ni flash): se pierden al reiniciar el NodeMCU y vuelven a los valores de `riego_nodemcu.ino`.
+`tempC`/`humAire` llegan como `null` si el DHT22 aún no entrega una lectura válida. `luxLuz` llega como `null` si no se detectó un BH1750 al arrancar. El historial y los umbrales cambiados por API viven en RAM del NodeMCU (sin RTC ni flash): se pierden al reiniciar y vuelven a los valores de `riego_nodemcu.ino` — por eso el bridge los espeja en Firebase, que sí persiste.
+
+## 🖥️ Panel web
+
+Sitio estático (HTML/CSS/JS, sin build) en [`web/`](web), pensado para dejar una URL pública
+(Firebase Hosting) que se pueda mostrar en la presentación. Lee/escribe Firebase igual que la
+app. Ver [`web/README.md`](web/README.md) para configurarlo y desplegarlo.
 
 ## 📱 App Android
 
-Cliente nativo en Kotlin (carpeta [`app-android/`](app-android/)) que muestra el mismo estado en vivo y los mismos controles que la página web, pero como app instalada en el celular. Habla directo con la IP local del NodeMCU — misma red WiFi, sin nube.
+Cliente nativo en Kotlin (carpeta [`app-android/`](app-android/)) que muestra el mismo estado en vivo y los mismos controles que el panel web, pero como app instalada en el celular. Lee/escribe Firebase igual que la web — no depende de estar en la WiFi del NodeMCU.
 
-Ver [`app-android/README.md`](app-android/README.md) para cómo abrirla en Android Studio, compilarla e instalarla.
+Ver [`app-android/README.md`](app-android/README.md) para cómo configurarla, abrirla en Android Studio, compilarla e instalarla.
+
+## 🔒 Seguridad
+
+El login y el dashboard (web y app) están endurecidos siguiendo **OWASP Top 10 2021** y
+**OWASP ASVS 5.0**: reglas de Realtime Database con mínimo privilegio y validación server-side,
+Content-Security-Policy estricta, política de contraseñas sin composición forzada, salida de
+datos siempre por `textContent` (nunca `innerHTML` con datos de la base), y `allowBackup="false"`
+en Android. Detalle completo, control por control, en [`web/README.md`](web/README.md#seguridad-owasp-top-10-2021--asvs-50).
 
 ## 🗂️ Estructura
 
@@ -158,6 +220,8 @@ riego-iot-nodemcu/
 ├── firmware/riego_nodemcu/
 │   ├── riego_nodemcu.ino
 │   └── config.h.example      # copiar como config.h (no se sube a GitHub)
+├── bridge/                    # puente Node.js: NodeMCU <-> Firebase — ver su propio README
+├── web/                       # panel web (HTML/CSS/JS) — ver su propio README
 ├── app-android/               # app Android (Kotlin) — ver su propio README
 ├── README.md
 └── .gitignore

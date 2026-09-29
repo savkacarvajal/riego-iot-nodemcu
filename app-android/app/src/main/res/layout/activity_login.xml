@@ -76,20 +76,11 @@
                     android:padding="16dp">
 
                     <EditText
-                        android:id="@+id/inputIp"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/hint_ip"
-                        android:inputType="text"
-                        android:importantForAutofill="no" />
-
-                    <EditText
                         android:id="@+id/inputUsuario"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/hint_usuario"
-                        android:inputType="text"
-                        android:layout_marginTop="8dp"
+                        android:inputType="textEmailAddress"
                         android:importantForAutofill="no" />
 
                     <EditText

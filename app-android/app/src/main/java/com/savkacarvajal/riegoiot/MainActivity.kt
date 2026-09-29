@@ -1,7 +1,8 @@
 package com.savkacarvajal.riegoiot
 
-import android.content.Context
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
@@ -10,13 +11,15 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.ktx.Firebase
 import com.savkacarvajal.riegoiot.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -24,10 +27,15 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private var pollingJob: Job? = null
-    private lateinit var api: RiegoApiClient
+    private val repo = RiegoRepository()
+    private var ultimoEstado: EstadoRiego? = null
+    private var listenerEstado: ValueEventListener? = null
+    private var listenerHistorial: ValueEventListener? = null
 
-    private val prefs by lazy { getSharedPreferences("riego_iot", Context.MODE_PRIVATE) }
+    private val solicitarPermisoNotificaciones =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+            if (concedido) activarNotificaciones() else mostrarEstadoNotificaciones(getString(R.string.notificaciones_denegadas), esError = true)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,37 +43,30 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         aplicarBlurDecorativo()
 
-        val ip = prefs.getString("ip", "") ?: ""
-        val claveCifrada = prefs.getString("clave_cifrada", null)
-        val ivClave = prefs.getString("clave_iv", null)
-        val clave = if (claveCifrada != null && ivClave != null) {
-            SeguridadLocal.descifrar(claveCifrada, ivClave)
-        } else null
-
-        if (ip.isBlank() || clave == null) {
-            // No hay conexion guardada, o la clave no se pudo descifrar (ej.
-            // se reinstalo la app y el Keystore perdio la llave): vuelve al
-            // login en vez de mostrar un dashboard sin datos validos.
+        if (Firebase.auth.currentUser == null) {
             irALogin()
             return
         }
-        api = RiegoApiClient(ip, prefs.getString("usuario", "") ?: "", clave)
 
         configurarSeccionesPlegables()
-        binding.btnCambiarConexion.setOnClickListener { irALogin() }
-        binding.btnCambiarModo.setOnClickListener { ejecutar { it.cambiarModo() } }
-        binding.btnEncender.setOnClickListener { ejecutar { it.encender() } }
-        binding.btnApagar.setOnClickListener { ejecutar { it.apagar() } }
+        binding.btnCambiarConexion.setOnClickListener {
+            Firebase.auth.signOut()
+            irALogin()
+        }
+        binding.btnCambiarModo.setOnClickListener {
+            ultimoEstado?.let { estado -> repo.cambiarModo(estado.modoAuto) { mostrarError(getString(R.string.error_conexion)) } }
+        }
+        binding.btnEncender.setOnClickListener { repo.encender { mostrarError(getString(R.string.error_conexion)) } }
+        binding.btnApagar.setOnClickListener { repo.apagar { mostrarError(getString(R.string.error_conexion)) } }
         binding.btnGuardarUmbrales.setOnClickListener { guardarUmbrales() }
+        binding.btnNotificaciones.setOnClickListener { pedirPermisoYActivarNotificaciones() }
 
         cargarUmbrales()
-        pollingJob = lifecycleScope.launch {
-            while (isActive) {
-                actualizarEstado()
-                actualizarHistorial()
-                delay(2000)
-            }
-        }
+        listenerEstado = repo.escucharEstado(
+            alCambiar = { estado -> ultimoEstado = estado; pintarEstado(estado) },
+            alError = { mostrarError(getString(R.string.error_conexion)) }
+        )
+        listenerHistorial = repo.escucharHistorial { eventos -> pintarHistorial(eventos) }
     }
 
     // Manchas de color decorativas detras del contenido, difuminadas de
@@ -81,9 +82,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun irALogin() {
-        pollingJob?.cancel()
+        quitarListeners()
         startActivity(Intent(this, LoginActivity::class.java))
         finish()
+    }
+
+    private fun quitarListeners() {
+        listenerEstado?.let { repo.dejarDeEscuchar("estado", it) }
+        listenerHistorial?.let { repo.dejarDeEscucharHistorial(it) }
+        listenerEstado = null
+        listenerHistorial = null
     }
 
     // Paneles por capa (Percepcion / Procesamiento / Aplicacion), cada uno se
@@ -103,38 +111,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun actualizarEstado() {
-        val cliente = api
-        try {
-            val estado = withContext(Dispatchers.IO) { cliente.obtenerEstado() }
-            pintarEstado(estado)
-        } catch (e: ApiException) {
-            val mensaje = if (e.message == "credenciales")
-                getString(R.string.error_credenciales) else getString(R.string.error_conexion)
-            mostrarError(mensaje)
-        } catch (e: Exception) {
-            mostrarError(getString(R.string.error_conexion))
-        }
-    }
-
-    private suspend fun actualizarHistorial() {
-        val cliente = api
-        try {
-            val eventos = withContext(Dispatchers.IO) { cliente.obtenerHistorial() }
-            pintarHistorial(eventos)
-        } catch (e: Exception) {
-            // El historial es informacion secundaria: si falla, se deja el ultimo
-            // valor pintado en vez de tapar la pantalla con un error.
-        }
-    }
-
-    // Los umbrales cambian poco: se cargan una vez al entrar, no en cada
-    // ciclo de polling (asi no se pisa lo que el usuario este editando).
+    // Los umbrales cambian poco: se cargan una vez al entrar (lectura unica a
+    // Firebase), no con un listener en vivo, asi no se pisa lo que el usuario
+    // este editando.
     private fun cargarUmbrales() {
         lifecycleScope.launch {
             try {
-                val umbrales = withContext(Dispatchers.IO) { api.obtenerUmbrales() }
-                pintarUmbrales(umbrales)
+                val umbrales = withContext(Dispatchers.IO) { repo.obtenerUmbrales() }
+                umbrales?.let { pintarUmbrales(it) }
             } catch (e: Exception) {
                 // Si falla, los campos quedan vacios; guardar reintenta la conexion.
             }
@@ -153,15 +137,14 @@ class MainActivity : AppCompatActivity() {
             mostrarEstadoUmbrales(getString(R.string.error_umbrales), esError = true)
             return
         }
-        lifecycleScope.launch {
-            try {
-                val umbrales = withContext(Dispatchers.IO) { api.actualizarUmbrales(riego, apaga) }
-                pintarUmbrales(umbrales)
+        repo.actualizarUmbrales(
+            riego, apaga,
+            alExito = {
+                pintarUmbrales(Umbrales(riego, apaga))
                 mostrarEstadoUmbrales(getString(R.string.umbrales_guardados), esError = false)
-            } catch (e: Exception) {
-                mostrarEstadoUmbrales(getString(R.string.error_conexion), esError = true)
-            }
-        }
+            },
+            alError = { mostrarEstadoUmbrales(getString(R.string.error_conexion), esError = true) }
+        )
     }
 
     private fun mostrarEstadoUmbrales(mensaje: String, esError: Boolean) {
@@ -170,16 +153,29 @@ class MainActivity : AppCompatActivity() {
         binding.tvUmbralesEstado.visibility = View.VISIBLE
     }
 
-    private fun ejecutar(accion: suspend (RiegoApiClient) -> EstadoRiego) {
-        val cliente = api
-        lifecycleScope.launch {
-            try {
-                val estado = withContext(Dispatchers.IO) { accion(cliente) }
-                pintarEstado(estado)
-            } catch (e: Exception) {
-                mostrarError(getString(R.string.error_conexion))
-            }
+    // En Android 13+ (API 33) mostrar notificaciones requiere permiso en tiempo
+    // de ejecucion; en versiones anteriores el permiso se concede solo.
+    private fun pedirPermisoYActivarNotificaciones() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val concedido = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+            if (concedido) activarNotificaciones() else solicitarPermisoNotificaciones.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            activarNotificaciones()
         }
+    }
+
+    private fun activarNotificaciones() {
+        RegistroNotificaciones.activar(
+            alExito = { mostrarEstadoNotificaciones(getString(R.string.notificaciones_activadas), esError = false) },
+            alError = { mostrarEstadoNotificaciones(getString(R.string.notificaciones_error), esError = true) }
+        )
+    }
+
+    private fun mostrarEstadoNotificaciones(mensaje: String, esError: Boolean) {
+        binding.tvNotificacionesEstado.text = mensaje
+        binding.tvNotificacionesEstado.setTextColor(getColor(if (esError) R.color.error else R.color.primario_oscuro))
+        binding.tvNotificacionesEstado.visibility = View.VISIBLE
     }
 
     private fun pintarEstado(estado: EstadoRiego) {
@@ -256,6 +252,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        pollingJob?.cancel()
+        quitarListeners()
     }
 }
